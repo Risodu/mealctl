@@ -1,0 +1,214 @@
+{
+    "intake": {
+        "protein": {
+            "morning": {
+                "required": { "min": 150, "max": 450 },
+                "recommended": { "min": 250, "max": 350 }
+            },
+            "noon": {
+                "required": { "min": 300, "max": 700 },
+                "recommended": { "min": 450, "max": 600 }
+            },
+            "evening": {
+                "required": { "min": 300, "max": 700 },
+                "recommended": { "min": 450, "max": 600 }
+            },
+            "night": {
+                "required": { "min": 0, "max": 300 },
+                "recommended": { "min": 100, "max": 200 }
+            },
+            "total": {
+                "required": { "min": 800, "max": 1800 },
+                "recommended": { "min": 1000, "max": 1600 }
+            },
+            "fdc_id": 1003
+        },
+
+        "carbohydrates": {
+            "morning": {
+                "required": { "min": 500, "max": 1600 },
+                "recommended": { "min": 800, "max": 1200 }
+            },
+            "noon": {
+                "required": { "min": 800, "max": 2000 },
+                "recommended": { "min": 1200, "max": 1500 }
+            },
+            "evening": {
+                "required": { "min": 600, "max": 1600 },
+                "recommended": { "min": 900, "max": 1200 }
+            },
+            "night": {
+                "required": { "min": 0, "max": 500 },
+                "recommended": { "min": 0, "max": 300 }
+            },
+            "total": {
+                "required": { "min": 2500, "max": 5500 },
+                "recommended": { "min": 3000, "max": 5000 }
+            },
+            "fdc_id": 1005
+        },
+
+        "sugar": {
+            "morning": {
+                "required": { "min": 0, "max": 400 },
+                "recommended": { "min": 0, "max": 300 }
+            },
+            "noon": {
+                "required": { "min": 0, "max": 400 },
+                "recommended": { "min": 0, "max": 300 }
+            },
+            "evening": {
+                "required": { "min": 0, "max": 250 },
+                "recommended": { "min": 0, "max": 150 }
+            },
+            "night": {
+                "required": { "min": 0, "max": 100 },
+                "recommended": { "min": 0, "max": 50 }
+            },
+            "total": {
+                "required": { "min": 0, "max": 1200 },
+                "recommended": { "min": 0, "max": 800 }
+            },
+            "fdc_id": 2000
+        },
+
+        "fat": {
+            "morning": {
+                "required": { "min": 150, "max": 400 },
+                "recommended": { "min": 200, "max": 300 }
+            },
+            "noon": {
+                "required": { "min": 250, "max": 600 },
+                "recommended": { "min": 350, "max": 450 }
+            },
+            "evening": {
+                "required": { "min": 200, "max": 500 },
+                "recommended": { "min": 300, "max": 400 }
+            },
+            "night": {
+                "required": { "min": 0, "max": 250 },
+                "recommended": { "min": 0, "max": 150 }
+            },
+            "total": {
+                "required": { "min": 600, "max": 1400 },
+                "recommended": { "min": 800, "max": 1200 }
+            },
+            "fdc_id": 1004
+        },
+
+        "saturated_fat": {
+            "total": {
+                "required": { "min": 0, "max": 350 },
+                "recommended": { "min": 0, "max": 250 }
+            },
+            "fdc_id": 1258
+        },
+
+        "fiber": {
+            "morning": {
+                "required": { "min": 80, "max": 250 },
+                "recommended": { "min": 120, "max": 180 }
+            },
+            "noon": {
+                "required": { "min": 100, "max": 300 },
+                "recommended": { "min": 150, "max": 220 }
+            },
+            "evening": {
+                "required": { "min": 50, "max": 200 },
+                "recommended": { "min": 80, "max": 150 }
+            },
+            "night": {
+                "required": { "min": 0, "max": 100 },
+                "recommended": { "min": 0, "max": 50 }
+            },
+            "total": {
+                "required": { "min": 250, "max": 700 },
+                "recommended": { "min": 350, "max": 600 }
+            },
+            "fdc_id": 1079
+        },
+
+        "salt": {
+            "morning": {
+                "required": { "min": 0, "max": 20 },
+                "recommended": { "min": 0, "max": 15 }
+            },
+            "noon": {
+                "required": { "min": 0, "max": 35 },
+                "recommended": { "min": 0, "max": 30 }
+            },
+            "evening": {
+                "required": { "min": 0, "max": 30 },
+                "recommended": { "min": 0, "max": 25 }
+            },
+            "night": {
+                "required": { "min": 0, "max": 15 },
+                "recommended": { "min": 0, "max": 10 }
+            },
+            "total": {
+                "required": { "min": 0, "max": 100 },
+                "recommended": { "min": 0, "max": 85 }
+            },
+            "fdc_id": 1149
+        },
+
+        "energy": {
+            "morning": {
+                "required": { "min": 1200, "max": 2600 },
+                "recommended": { "min": 1600, "max": 2200 }
+            },
+            "noon": {
+                "required": { "min": 1800, "max": 3600 },
+                "recommended": { "min": 2400, "max": 3000 }
+            },
+            "evening": {
+                "required": { "min": 1600, "max": 3000 },
+                "recommended": { "min": 2000, "max": 2600 }
+            },
+            "night": {
+                "required": { "min": 0, "max": 1400 },
+                "recommended": { "min": 200, "max": 800 }
+            },
+            "total": {
+                "required": { "min": 25000, "max": 40000 },
+                "recommended": { "min": 30000, "max": 35000 }
+            },
+            "fdc_id": 1008
+        },
+
+        "water": {
+            "total": {
+                "required": { "min": 25000, "max": 50000 },
+                "recommended": { "min": 30000, "max": 40000 }
+            },
+            "fdc_id": 1051
+        }
+    },
+    "times": [
+        {
+            "identifier": "morning",
+            "start": 5,
+            "end": 11
+        },
+        {
+            "identifier": "noon",
+            "start": 11,
+            "end": 15
+        },
+        {
+            "identifier": "evening",
+            "start": 15,
+            "end": 20
+        },
+        {
+            "identifier": "night",
+            "start": 20,
+            "end": 29
+        },
+        {
+            "identifier": "total",
+            "start": 5,
+            "end": 29
+        }
+    ]
+}

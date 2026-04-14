@@ -1,0 +1,323 @@
+{
+    "system": [
+        {
+            "name": "food",
+            "columns": [
+                {"name": "fdc_id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "foodClass", "type": "TEXT"},
+                {"name": "data_type", "type": "TEXT"},
+                {"name": "description", "type": "TEXT"},
+                {"name": "food_category_id", "type": "INTEGER"},
+                {"name": "publication_date", "type": "TEXT"},
+                {"name": "scientific_name", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "nutrient",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "name", "type": "TEXT"},
+                {"name": "unit_name", "type": "TEXT"},
+                {"name": "nutrient_nbr", "type": "TEXT"},
+                {"name": "rank", "type": "INTEGER"}
+            ]
+        },
+        {
+            "name": "food_nutrient",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "fdc_id", "type": "INTEGER"},
+                {"name": "nutrient_id", "type": "INTEGER"},
+                {"name": "amount", "type": "REAL"},
+                {"name": "data_points", "type": "INTEGER"},
+                {"name": "derivation_id", "type": "INTEGER"},
+                {"name": "min", "type": "REAL"},
+                {"name": "max", "type": "REAL"},
+                {"name": "median", "type": "REAL"},
+                {"name": "loq", "type": "REAL"},
+                {"name": "footnote", "type": "TEXT"},
+                {"name": "min_year_acquired", "type": "INTEGER"}
+            ]
+        },
+        {
+            "name": "food_category",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "code", "type": "TEXT"},
+                {"name": "description", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "measure_unit",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "name", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "food_portion",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "fdc_id", "type": "INTEGER"},
+                {"name": "seq_num", "type": "INTEGER"},
+                {"name": "amount", "type": "REAL"},
+                {"name": "measure_unit_id", "type": "INTEGER"},
+                {"name": "portion_description", "type": "TEXT"},
+                {"name": "modifier", "type": "TEXT"},
+                {"name": "gram_weight", "type": "REAL"},
+                {"name": "data_points", "type": "INTEGER"},
+                {"name": "footnote", "type": "TEXT"},
+                {"name": "min_year_acquired", "type": "INTEGER"}
+            ]
+        },
+        {
+            "name": "branded_food",
+            "columns": [
+                {"name": "fdc_id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "brand_owner", "type": "TEXT"},
+                {"name": "brand_name", "type": "TEXT"},
+                {"name": "subbrand_name", "type": "TEXT"},
+                {"name": "gtin_upc", "type": "TEXT"},
+                {"name": "ingredients", "type": "TEXT"},
+                {"name": "not_a_significant_source_of", "type": "TEXT"},
+                {"name": "serving_size", "type": "REAL"},
+                {"name": "serving_size_unit", "type": "TEXT"},
+                {"name": "household_serving_fulltext", "type": "TEXT"},
+                {"name": "branded_food_category", "type": "TEXT"},
+                {"name": "data_source", "type": "TEXT"},
+                {"name": "package_weight", "type": "REAL"},
+                {"name": "modified_date", "type": "TEXT"},
+                {"name": "available_date", "type": "TEXT"},
+                {"name": "discontinued_date", "type": "TEXT"},
+                {"name": "market_country", "type": "TEXT"},
+                {"name": "preparation_state_code", "type": "TEXT"},
+                {"name": "trade_channel", "type": "TEXT"},
+                {"name": "short_description", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "foundation_food",
+            "columns": [
+                {"name": "fdc_id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "NDB_number", "type": "INTEGER"},
+                {"name": "footnote", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "sr_legacy_food",
+            "columns": [
+                {"name": "fdc_id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "NDB_number", "type": "INTEGER"}
+            ]
+        },
+        {
+            "name": "sample_food",
+            "columns": [
+                {"name": "fdc_id", "type": "INTEGER PRIMARY KEY"}
+            ]
+        },
+        {
+            "name": "sub_sample_food",
+            "columns": [
+                {"name": "fdc_id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "fdc_id_of_sample_food", "type": "INTEGER"}
+            ]
+        },
+        {
+            "name": "agricultural_samples",
+            "columns": [
+                {"name": "fdc_id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "acquisition_date", "type": "TEXT"},
+                {"name": "market_class", "type": "TEXT"},
+                {"name": "treatment", "type": "TEXT"},
+                {"name": "state", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "market_acquisition",
+            "columns": [
+                {"name": "fdc_id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "brand_description", "type": "TEXT"},
+                {"name": "expiration_date", "type": "TEXT"},
+                {"name": "label_weight", "type": "REAL"},
+                {"name": "location", "type": "TEXT"},
+                {"name": "acquisition_date", "type": "TEXT"},
+                {"name": "sales_type", "type": "TEXT"},
+                {"name": "sample_lot_nbr", "type": "TEXT"},
+                {"name": "sell_by_date", "type": "TEXT"},
+                {"name": "store_city", "type": "TEXT"},
+                {"name": "store_name", "type": "TEXT"},
+                {"name": "store_state", "type": "TEXT"},
+                {"name": "upc_code", "type": "TEXT"},
+                {"name": "acquisition_number", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "input_food",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "fdc_id", "type": "INTEGER"},
+                {"name": "fdc_of_input_food", "type": "INTEGER"},
+                {"name": "seq_num", "type": "INTEGER"},
+                {"name": "amount", "type": "REAL"},
+                {"name": "ingredient_code", "type": "TEXT"},
+                {"name": "ingredient_description", "type": "TEXT"},
+                {"name": "unit", "type": "TEXT"},
+                {"name": "portion_code", "type": "TEXT"},
+                {"name": "portion_description", "type": "TEXT"},
+                {"name": "gram_weight", "type": "REAL"},
+                {"name": "retention_code", "type": "INTEGER"}
+            ]
+        },
+        {
+            "name": "food_attribute",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "fdc_id", "type": "INTEGER"},
+                {"name": "seq_num", "type": "INTEGER"},
+                {"name": "food_attribute_type_id", "type": "INTEGER"},
+                {"name": "name", "type": "TEXT"},
+                {"name": "value", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "food_attribute_type",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "name", "type": "TEXT"},
+                {"name": "description", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "lab_method",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "description", "type": "TEXT"},
+                {"name": "technique", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "lab_method_nutrient",
+            "columns": [
+                {"name": "lab_method_id", "type": "INTEGER"},
+                {"name": "nutrient_id", "type": "INTEGER"}
+            ]
+        },
+        {
+            "name": "food_nutrient_derivation",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "code", "type": "TEXT"},
+                {"name": "description", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "food_nutrient_source",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "code", "type": "TEXT"},
+                {"name": "description", "type": "TEXT"}
+            ]
+        }
+    ],
+
+    "user": [
+        {
+            "name": "consumed_food",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "fdc_id", "type": "INTEGER NOT NULL"},
+                {"name": "weight", "type": "REAL NOT NULL"},
+                {"name": "timestamp", "type": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL"}
+            ]
+        },
+        {
+            "name": "food",
+            "columns": [
+                {"name": "fdc_id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "foodClass", "type": "TEXT"},
+                {"name": "data_type", "type": "TEXT"},
+                {"name": "description", "type": "TEXT"},
+                {"name": "food_category_id", "type": "INTEGER"},
+                {"name": "publication_date", "type": "TEXT"},
+                {"name": "scientific_name", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "food_nutrient",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "fdc_id", "type": "INTEGER"},
+                {"name": "nutrient_id", "type": "INTEGER"},
+                {"name": "amount", "type": "REAL"},
+                {"name": "data_points", "type": "INTEGER"},
+                {"name": "derivation_id", "type": "INTEGER"},
+                {"name": "min", "type": "REAL"},
+                {"name": "max", "type": "REAL"},
+                {"name": "median", "type": "REAL"},
+                {"name": "loq", "type": "REAL"},
+                {"name": "footnote", "type": "TEXT"},
+                {"name": "min_year_acquired", "type": "INTEGER"}
+            ]
+        },
+        {
+            "name": "food_category",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "code", "type": "TEXT"},
+                {"name": "description", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "measure_unit",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "name", "type": "TEXT"}
+            ]
+        },
+        {
+            "name": "food_portion",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "fdc_id", "type": "INTEGER"},
+                {"name": "seq_num", "type": "INTEGER"},
+                {"name": "amount", "type": "REAL"},
+                {"name": "measure_unit_id", "type": "INTEGER"},
+                {"name": "portion_description", "type": "TEXT"},
+                {"name": "modifier", "type": "TEXT"},
+                {"name": "gram_weight", "type": "REAL"},
+                {"name": "data_points", "type": "INTEGER"},
+                {"name": "footnote", "type": "TEXT"},
+                {"name": "min_year_acquired", "type": "INTEGER"}
+            ]
+        },
+        {
+            "name": "branded_food",
+            "columns": [
+                {"name": "fdc_id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "brand_owner", "type": "TEXT"},
+                {"name": "brand_name", "type": "TEXT"},
+                {"name": "subbrand_name", "type": "TEXT"},
+                {"name": "gtin_upc", "type": "TEXT"},
+                {"name": "ingredients", "type": "TEXT"},
+                {"name": "not_a_significant_source_of", "type": "TEXT"},
+                {"name": "serving_size", "type": "REAL"},
+                {"name": "serving_size_unit", "type": "TEXT"},
+                {"name": "household_serving_fulltext", "type": "TEXT"},
+                {"name": "branded_food_category", "type": "TEXT"},
+                {"name": "data_source", "type": "TEXT"},
+                {"name": "package_weight", "type": "REAL"},
+                {"name": "modified_date", "type": "TEXT"},
+                {"name": "available_date", "type": "TEXT"},
+                {"name": "discontinued_date", "type": "TEXT"},
+                {"name": "market_country", "type": "TEXT"},
+                {"name": "preparation_state_code", "type": "TEXT"},
+                {"name": "trade_channel", "type": "TEXT"},
+                {"name": "short_description", "type": "TEXT"}
+            ]
+        }
+    ],
+
+    "posprocess": [
+    ]
+}

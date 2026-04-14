@@ -1,0 +1,6 @@
+__pycache__
+datasets/foundation-food
+datasets/jsons
+datasets/zips
+datasets/enums.txt
+*.old*
