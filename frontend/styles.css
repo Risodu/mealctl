@@ -1,0 +1,388 @@
+:root {
+  color-scheme: light;
+  --bg: #f5f1e8;
+  --surface: rgba(255, 252, 247, 0.88);
+  --surface-strong: #fffdf8;
+  --surface-muted: #f0e9dc;
+  --text: #1f241d;
+  --muted: #636a5c;
+  --border: rgba(69, 82, 49, 0.18);
+  --shadow: 0 20px 40px rgba(44, 48, 36, 0.08);
+  --accent: #42693e;
+  --accent-soft: rgba(66, 105, 62, 0.12);
+  --danger: #9a3c2d;
+  --danger-soft: rgba(154, 60, 45, 0.1);
+  --required: rgba(218, 176, 64, 0.32);
+  --recommended: rgba(66, 105, 62, 0.32);
+  --actual: #1f241d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #fff7ea 0, var(--bg) 55%);
+  color: var(--text);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--surface-muted);
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.72rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+label > span {
+  color: var(--muted);
+}
+
+.app-shell {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+.topbar,
+.card,
+.tabs,
+.banner {
+  backdrop-filter: blur(14px);
+}
+
+.topbar,
+.card,
+.banner {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.topbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: 24px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.eyebrow {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 0.78rem;
+}
+
+.settings-panel,
+.inline-form,
+.portion-grid,
+.split-layout,
+.panel-header,
+.section-heading {
+  display: flex;
+  gap: 0.9rem;
+}
+
+.settings-panel,
+.inline-form,
+.panel-header,
+.section-heading {
+  align-items: end;
+}
+
+.settings-panel {
+  flex-wrap: wrap;
+}
+
+.settings-panel label {
+  min-width: min(24rem, 60vw);
+}
+
+.banner {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--surface) 72%, #fff 28%);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.45rem;
+  background: rgba(255, 253, 248, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow-x: auto;
+}
+
+.tab {
+  background: transparent;
+  border-color: transparent;
+}
+
+.tab.is-active {
+  background: var(--surface-strong);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.view {
+  display: none;
+}
+
+.view.is-active {
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  border-radius: 24px;
+  padding: 1rem;
+}
+
+.stack-md,
+.stack-lg,
+.summary-grid,
+.dynamic-list,
+.result-list {
+  display: grid;
+}
+
+.stack-md {
+  gap: 0.8rem;
+}
+
+.stack-lg {
+  gap: 1rem;
+}
+
+.split-layout {
+  align-items: start;
+}
+
+.split-layout > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.summary-card {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.status-line {
+  color: var(--muted);
+  font-size: 0.92rem;
+  min-height: 1.2rem;
+}
+
+.meal-list,
+.nutrient-list,
+.portion-list,
+.nutrient-table {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.meal-item,
+.portion-item,
+.detail-grid,
+.dynamic-row {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.meal-item {
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  padding: 0.75rem;
+  border-radius: 16px;
+  background: var(--surface-muted);
+}
+
+.meal-meta,
+.text-muted,
+.empty-state {
+  color: var(--muted);
+}
+
+.empty-state {
+  padding: 1rem;
+  border-radius: 16px;
+  background: var(--surface-muted);
+}
+
+.result-list {
+  gap: 0.55rem;
+}
+
+.result-item {
+  width: 100%;
+  text-align: left;
+  border-radius: 18px;
+}
+
+.result-item strong,
+.food-title {
+  display: block;
+}
+
+.result-item small,
+.food-title small {
+  color: var(--muted);
+}
+
+.detail-grid {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.portion-grid {
+  flex-wrap: wrap;
+}
+
+.portion-grid label {
+  flex: 1 1 180px;
+}
+
+.portion-grid .span-2 {
+  flex-basis: 100%;
+}
+
+.nutrient-bar {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.nutrient-bar header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.nutrient-bar-track {
+  position: relative;
+  height: 0.78rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(99, 106, 92, 0.12), rgba(99, 106, 92, 0.2));
+  overflow: hidden;
+}
+
+.range-required,
+.range-recommended,
+.actual-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+}
+
+.range-required {
+  background: var(--required);
+}
+
+.range-recommended {
+  background: var(--recommended);
+}
+
+.actual-marker {
+  width: 4px;
+  background: var(--actual);
+  transform: translateX(-50%);
+}
+
+.nutrient-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.inline-error {
+  padding: 0.8rem 0.95rem;
+  border-radius: 16px;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.dynamic-list {
+  gap: 0.75rem;
+}
+
+.dynamic-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  align-items: end;
+  padding: 0.75rem;
+  border-radius: 18px;
+  background: var(--surface-muted);
+}
+
+.dynamic-row.ingredients-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr) auto;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@media (max-width: 960px) {
+  .topbar,
+  .panel-header,
+  .settings-panel,
+  .inline-form,
+  .split-layout,
+  .section-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dynamic-row,
+  .dynamic-row.ingredients-row {
+    grid-template-columns: 1fr;
+  }
+}

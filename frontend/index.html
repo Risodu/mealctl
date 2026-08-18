@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mealctl</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Food intake tracker</p>
+        <h1>Mealctl</h1>
+      </div>
+
+      <form id="settings-form" class="settings-panel">
+        <label>
+          <span>API path</span>
+          <input id="api-base-input" name="apiBase" type="text" value="/api/meal" spellcheck="false">
+        </label>
+        <button type="submit">Save</button>
+      </form>
+    </header>
+
+    <div id="global-error" class="banner hidden" role="alert"></div>
+
+    <nav class="tabs" aria-label="Primary">
+      <button class="tab is-active" data-view-target="dashboard-view" type="button">Dashboard</button>
+      <button class="tab" data-view-target="log-view" type="button">Log Meal</button>
+      <button class="tab" data-view-target="foods-view" type="button">Foods</button>
+      <button class="tab" data-view-target="custom-view" type="button">Custom Foods</button>
+    </nav>
+
+    <main>
+      <section id="dashboard-view" class="view is-active" aria-labelledby="dashboard-heading">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Daily intake</p>
+            <h2 id="dashboard-heading">Summary</h2>
+          </div>
+
+          <form id="summary-controls" class="inline-form">
+            <label>
+              <span>Date</span>
+              <input id="summary-date" name="date" type="date">
+            </label>
+            <button type="submit">Refresh</button>
+            <button id="summary-today" type="button">Today</button>
+          </form>
+        </div>
+
+        <div id="summary-status" class="status-line"></div>
+        <div id="summary-grid" class="summary-grid"></div>
+      </section>
+
+      <section id="log-view" class="view" aria-labelledby="log-heading">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Quick entry</p>
+            <h2 id="log-heading">Log a Meal</h2>
+          </div>
+        </div>
+
+        <div class="split-layout">
+          <div class="card stack-md">
+            <label>
+              <span>Search food</span>
+              <input id="food-search-input" type="search" placeholder="Bread, yogurt, banana..." autocomplete="off">
+            </label>
+
+            <div id="food-search-status" class="status-line"></div>
+            <div id="food-search-results" class="result-list"></div>
+          </div>
+
+          <div class="card stack-md">
+            <div id="selected-food-panel" class="empty-state">Pick a food to view portions and nutrients.</div>
+
+            <form id="log-meal-form" class="stack-md hidden">
+              <label>
+                <span>Timestamp</span>
+                <input id="meal-timestamp" name="timestamp" type="datetime-local" required>
+              </label>
+
+              <div class="portion-grid">
+                <label>
+                  <span>Mode</span>
+                  <select id="quantity-mode" name="mode">
+                    <option value="grams">Grams</option>
+                    <option value="portion">Portion</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>Grams</span>
+                  <input id="grams-input" name="grams" type="number" min="0" step="0.1" value="100">
+                </label>
+
+                <label>
+                  <span>Portion</span>
+                  <select id="portion-select" name="portion"></select>
+                </label>
+
+                <label>
+                  <span>Count</span>
+                  <input id="portion-count" name="count" type="number" min="0" step="0.1" value="1">
+                </label>
+              </div>
+
+              <p id="computed-weight" class="status-line"></p>
+              <div id="log-form-error" class="inline-error hidden"></div>
+              <button type="submit">Log meal</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section id="foods-view" class="view" aria-labelledby="foods-heading">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Library</p>
+            <h2 id="foods-heading">Foods</h2>
+          </div>
+        </div>
+
+        <div class="split-layout">
+          <div class="card stack-md">
+            <label>
+              <span>Search foods</span>
+              <input id="foods-browser-input" type="search" placeholder="Search the food database" autocomplete="off">
+            </label>
+            <div id="foods-browser-status" class="status-line"></div>
+            <div id="foods-browser-results" class="result-list"></div>
+          </div>
+
+          <div class="card stack-md">
+            <div id="foods-detail-panel" class="empty-state">Search and select a food to inspect it.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="custom-view" class="view" aria-labelledby="custom-heading">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Manual food entry</p>
+            <h2 id="custom-heading">Custom Foods</h2>
+          </div>
+        </div>
+
+        <div class="card stack-lg">
+          <form id="custom-food-form" class="stack-lg">
+            <div class="portion-grid">
+              <label>
+                <span>Action</span>
+                <select id="custom-action" name="action">
+                  <option value="addBrandedFood">Create branded food</option>
+                  <option value="addRecipeFood">Create recipe food</option>
+                  <option value="editBrandedFood">Edit branded food</option>
+                  <option value="editRecipeFood">Edit recipe food</option>
+                </select>
+              </label>
+
+              <label id="custom-fdc-wrap" class="hidden">
+                <span>Food id</span>
+                <input id="custom-fdc-id" name="fdcId" type="number" min="1" step="1">
+              </label>
+
+              <label class="span-2">
+                <span>Name</span>
+                <input id="custom-name" name="name" type="text" required>
+              </label>
+            </div>
+
+            <div id="recipe-ingredients-block" class="stack-md hidden">
+              <div class="section-heading">
+                <h3>Ingredients</h3>
+                <button id="add-ingredient-row" type="button">Add ingredient</button>
+              </div>
+              <div id="ingredients-list" class="dynamic-list"></div>
+            </div>
+
+            <div id="nutrients-block" class="stack-md">
+              <div class="section-heading">
+                <h3>Nutrients</h3>
+                <button id="add-nutrient-row" type="button">Add nutrient</button>
+              </div>
+              <div id="nutrient-rows" class="dynamic-list"></div>
+            </div>
+
+            <div class="stack-md">
+              <div class="section-heading">
+                <h3>Portions</h3>
+                <button id="add-portion-row" type="button">Add portion</button>
+              </div>
+              <div id="portion-rows" class="dynamic-list"></div>
+            </div>
+
+            <div id="custom-form-error" class="inline-error hidden"></div>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="result-item-template">
+    <button class="result-item" type="button"></button>
+  </template>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
