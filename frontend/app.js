@@ -1,14 +1,14 @@
 import { createApi } from "./api.js";
-import { state, setApiBase, today } from "./state.js";
+import { IMPORTANT_NUTRIENT_IDS } from "./config.js";
+import { state, today } from "./state.js";
 import { renderFoodDetails, renderIngredientOptions, renderResultList, renderSummary } from "./ui.js";
 
 const api = createApi(() => state.apiBase);
 let searchTimer = null;
 let browserTimer = null;
+let autoTimestampTimer = null;
 
 const elements = {
-  apiBaseInput: document.querySelector("#api-base-input"),
-  settingsForm: document.querySelector("#settings-form"),
   globalError: document.querySelector("#global-error"),
   tabs: [...document.querySelectorAll(".tab")],
   views: [...document.querySelectorAll(".view")],
@@ -22,8 +22,11 @@ const elements = {
   foodSearchResults: document.querySelector("#food-search-results"),
   selectedFoodPanel: document.querySelector("#selected-food-panel"),
   logMealForm: document.querySelector("#log-meal-form"),
+  mealTimestampAuto: document.querySelector("#meal-timestamp-auto"),
   mealTimestamp: document.querySelector("#meal-timestamp"),
   quantityMode: document.querySelector("#quantity-mode"),
+  gramsFields: document.querySelector("#grams-fields"),
+  portionFields: document.querySelector("#portion-fields"),
   gramsInput: document.querySelector("#grams-input"),
   portionSelect: document.querySelector("#portion-select"),
   portionCount: document.querySelector("#portion-count"),
@@ -52,25 +55,16 @@ const elements = {
 init();
 
 async function init() {
-  elements.apiBaseInput.value = state.apiBase;
   elements.summaryDate.value = state.summaryDate;
-  elements.mealTimestamp.value = nowLocalValue();
+  syncTimestampMode();
 
   bindEvents();
-  addNutrientRow();
   addPortionRow();
   updateCustomFormMode();
   await loadInitialData();
 }
 
 function bindEvents() {
-  elements.settingsForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    setApiBase(elements.apiBaseInput.value.trim());
-    clearGlobalError();
-    await loadInitialData();
-  });
-
   for (const tab of elements.tabs) {
     tab.addEventListener("click", () => setActiveView(tab.dataset.viewTarget));
   }
@@ -95,7 +89,8 @@ function bindEvents() {
     debounceSearch("browse");
   });
 
-  elements.quantityMode.addEventListener("change", renderComputedWeight);
+  elements.mealTimestampAuto.addEventListener("change", syncTimestampMode);
+  elements.quantityMode.addEventListener("change", syncQuantityMode);
   elements.gramsInput.addEventListener("input", renderComputedWeight);
   elements.portionSelect.addEventListener("change", renderComputedWeight);
   elements.portionCount.addEventListener("input", renderComputedWeight);
@@ -117,6 +112,7 @@ async function loadNutrients() {
   try {
     state.nutrients = await api.getNutrients();
     syncNutrientSelects();
+    seedBrandedNutrientsIfNeeded();
     clearGlobalError();
   } catch (error) {
     showGlobalError(error.message);
@@ -212,7 +208,7 @@ async function selectFood(fdcId, source) {
       renderFoodDetails(elements.selectedFoodPanel, food, state.nutrients);
       fillPortions(food);
       elements.logMealForm.classList.remove("hidden");
-      renderComputedWeight();
+      syncQuantityMode();
     } else {
       renderFoodDetails(elements.foodsDetailPanel, food, state.nutrients);
     }
@@ -226,13 +222,18 @@ async function selectFood(fdcId, source) {
 function fillPortions(food) {
   elements.portionSelect.textContent = "";
   const portions = Object.values(food.portions || {});
+  const portionOption = [...elements.quantityMode.options].find((option) => option.value === "portion");
   if (!portions.length) {
     const option = document.createElement("option");
     option.value = "";
     option.textContent = "No named portions";
     elements.portionSelect.append(option);
+    if (portionOption) portionOption.disabled = true;
+    elements.quantityMode.value = "grams";
     return;
   }
+
+  if (portionOption) portionOption.disabled = false;
 
   for (const portion of portions) {
     const option = document.createElement("option");
@@ -241,6 +242,18 @@ function fillPortions(food) {
     option.textContent = `${portion.amount} ${portion.unit || "portion"} = ${portion.weight} g`;
     elements.portionSelect.append(option);
   }
+}
+
+function syncQuantityMode() {
+  const hasPortions = !!state.selectedFood && Object.keys(state.selectedFood.portions || {}).length > 0;
+  if (elements.quantityMode.value === "portion" && !hasPortions) {
+    elements.quantityMode.value = "grams";
+  }
+
+  const isPortionMode = elements.quantityMode.value === "portion" && hasPortions;
+  elements.gramsFields.classList.toggle("hidden", isPortionMode);
+  elements.portionFields.classList.toggle("hidden", !isPortionMode);
+  renderComputedWeight();
 }
 
 function renderComputedWeight() {
@@ -259,6 +272,13 @@ function getComputedWeight() {
     return {
       weight: grams,
       message: Number.isFinite(grams) && grams > 0 ? `Computed weight: ${grams.toFixed(1)} g` : "Enter a positive gram value.",
+    };
+  }
+
+  if (!state.selectedFood || !Object.keys(state.selectedFood.portions || {}).length) {
+    return {
+      weight: Number.NaN,
+      message: "This food has no named portions; use grams.",
     };
   }
 
@@ -282,7 +302,7 @@ async function submitLogMeal(event) {
     return;
   }
 
-  const timestamp = elements.mealTimestamp.value;
+  const timestamp = elements.mealTimestampAuto.checked ? nowLocalValue() : elements.mealTimestamp.value;
   if (!timestamp) {
     showInlineError(elements.logFormError, "Timestamp is required.");
     return;
@@ -295,7 +315,7 @@ async function submitLogMeal(event) {
       timestamp,
     });
     hideInlineError(elements.logFormError);
-    elements.mealTimestamp.value = nowLocalValue();
+    syncTimestampMode();
     await loadSummary();
     setActiveView("dashboard-view");
   } catch (error) {
@@ -322,10 +342,10 @@ function updateCustomFormMode() {
   elements.customFdcWrap.classList.toggle("hidden", !isEdit);
 
   if (isRecipe && !elements.ingredientsList.children.length) addIngredientRow();
-  if (!isRecipe && !elements.nutrientRows.children.length) addNutrientRow();
+  if (!isRecipe && !elements.nutrientRows.children.length) seedBrandedNutrientsIfNeeded();
 }
 
-function addNutrientRow() {
+function addNutrientRow(preferredId = null) {
   const row = document.createElement("div");
   row.className = "dynamic-row";
 
@@ -334,6 +354,7 @@ function addNutrientRow() {
   selectLabel.firstChild.textContent = "Nutrient";
   const select = document.createElement("select");
   select.className = "nutrient-id-select";
+  if (preferredId !== null) select.dataset.preferredId = String(preferredId);
   selectLabel.append(select);
 
   const amountLabel = document.createElement("label");
@@ -384,6 +405,35 @@ function addIngredientRow() {
   weight.className = "ingredient-weight-input";
   weightLabel.append(weight);
 
+  const modeLabel = document.createElement("label");
+  modeLabel.append(document.createElement("span"));
+  modeLabel.firstChild.textContent = "Mode";
+  const mode = document.createElement("select");
+  mode.className = "ingredient-mode-select";
+  mode.innerHTML = '<option value="grams">Grams</option><option value="portion">Portion</option>';
+  modeLabel.append(mode);
+
+  const portionWrap = document.createElement("div");
+  portionWrap.className = "stack-md hidden ingredient-portion-wrap";
+  const portionLabel = document.createElement("label");
+  portionLabel.append(document.createElement("span"));
+  portionLabel.firstChild.textContent = "Portion";
+  const portionSelect = document.createElement("select");
+  portionSelect.className = "ingredient-portion-select";
+  portionLabel.append(portionSelect);
+
+  const countLabel = document.createElement("label");
+  countLabel.append(document.createElement("span"));
+  countLabel.firstChild.textContent = "Count";
+  const count = document.createElement("input");
+  count.type = "number";
+  count.min = "0";
+  count.step = "0.1";
+  count.value = "1";
+  count.className = "ingredient-count-input";
+  countLabel.append(count);
+  portionWrap.append(portionLabel, countLabel);
+
   renderIngredientOptions(select, Object.values(state.foodCache));
   search.addEventListener("input", () => {
     const query = search.value.trim();
@@ -397,14 +447,21 @@ function addIngredientRow() {
       try {
         const results = Object.values(await api.searchFoods(query));
         renderIngredientOptions(select, results);
+        void syncIngredientPortions(row);
       } catch (error) {
         showInlineError(elements.customFormError, error.message);
       }
     }, 250);
   });
 
-  row.append(searchLabel, foodLabel, weightLabel, removeButton(() => row.remove()));
+  select.addEventListener("change", () => {
+    void syncIngredientPortions(row);
+  });
+  mode.addEventListener("change", () => syncIngredientMode(row));
+
+  row.append(searchLabel, foodLabel, modeLabel, weightLabel, removeButton(() => row.remove()), portionWrap);
   elements.ingredientsList.append(row);
+  void syncIngredientPortions(row);
 }
 
 function addPortionRow() {
@@ -445,7 +502,7 @@ function removeButton(onClick) {
 function syncNutrientSelects() {
   const options = Object.values(state.nutrients).sort((a, b) => a.name.localeCompare(b.name));
   for (const select of document.querySelectorAll(".nutrient-id-select")) {
-    const current = select.value;
+    const current = select.value || select.dataset.preferredId || "";
     select.textContent = "";
     for (const nutrient of options) {
       const option = document.createElement("option");
@@ -454,6 +511,14 @@ function syncNutrientSelects() {
       select.append(option);
     }
     if (current) select.value = current;
+  }
+}
+
+function seedBrandedNutrientsIfNeeded() {
+  if (elements.customAction.value === "addRecipeFood" || elements.customAction.value === "editRecipeFood") return;
+  if (elements.nutrientRows.children.length) return;
+  for (const id of IMPORTANT_NUTRIENT_IDS) {
+    addNutrientRow(id);
   }
 }
 
@@ -472,7 +537,7 @@ async function submitCustomFood(event) {
     elements.ingredientsList.textContent = "";
     elements.portionRows.textContent = "";
     if (action === "addRecipeFood" || action === "editRecipeFood") addIngredientRow();
-    else addNutrientRow();
+    else seedBrandedNutrientsIfNeeded();
     addPortionRow();
     updateCustomFormMode();
   } catch (error) {
@@ -517,7 +582,16 @@ function buildCustomPayload(action) {
   if (isRecipe) {
     payload.ingredients = [...elements.ingredientsList.querySelectorAll(".dynamic-row")].map((row) => {
       const fdcId = Number(row.querySelector(".ingredient-food-select").value);
-      const weight = Number(row.querySelector(".ingredient-weight-input").value);
+      const mode = row.querySelector(".ingredient-mode-select").value;
+      let weight;
+      if (mode === "portion") {
+        const selected = row.querySelector(".ingredient-portion-select").selectedOptions[0];
+        const portionWeight = Number(selected?.dataset.weight);
+        const count = Number(row.querySelector(".ingredient-count-input").value);
+        weight = portionWeight * count;
+      } else {
+        weight = Number(row.querySelector(".ingredient-weight-input").value);
+      }
       if (!Number.isInteger(fdcId) || fdcId <= 0 || !Number.isFinite(weight) || weight <= 0) {
         throw new Error("Each ingredient needs a selected food and positive weight.");
       }
@@ -570,6 +644,83 @@ function clearGlobalError() {
 function showInlineError(node, message) {
   node.textContent = message;
   node.classList.remove("hidden");
+}
+
+async function getFoodDetailsCached(fdcId) {
+  if (state.foodCache[fdcId]?.portions) return state.foodCache[fdcId];
+  const food = await api.getFood(fdcId);
+  state.foodCache[fdcId] = food;
+  return food;
+}
+
+async function syncIngredientPortions(row) {
+  const select = row.querySelector(".ingredient-food-select");
+  const portionSelect = row.querySelector(".ingredient-portion-select");
+  const mode = row.querySelector(".ingredient-mode-select");
+  const fdcId = Number(select.value);
+
+  portionSelect.textContent = "";
+  if (!Number.isInteger(fdcId) || fdcId <= 0) {
+    mode.value = "grams";
+    syncIngredientMode(row);
+    return;
+  }
+
+  try {
+    const food = await getFoodDetailsCached(fdcId);
+    const portions = Object.values(food.portions || {});
+    const portionOption = [...mode.options].find((option) => option.value === "portion");
+
+    if (!portions.length) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "No named portions";
+      portionSelect.append(option);
+      if (portionOption) portionOption.disabled = true;
+      mode.value = "grams";
+    } else {
+      if (portionOption) portionOption.disabled = false;
+      for (const portion of portions) {
+        const option = document.createElement("option");
+        option.value = portion.id;
+        option.dataset.weight = portion.weight;
+        option.textContent = `${portion.amount} ${portion.unit || "portion"} = ${portion.weight} g`;
+        portionSelect.append(option);
+      }
+    }
+
+    syncIngredientMode(row);
+  } catch (error) {
+    showInlineError(elements.customFormError, error.message);
+  }
+}
+
+function syncIngredientMode(row) {
+  const mode = row.querySelector(".ingredient-mode-select");
+  const weightLabel = row.querySelector(".ingredient-weight-input").closest("label");
+  const portionWrap = row.querySelector(".ingredient-portion-wrap");
+  const portionSelect = row.querySelector(".ingredient-portion-select");
+  const hasPortions = !!portionSelect.options.length && portionSelect.options[0].value !== "";
+  if (mode.value === "portion" && !hasPortions) mode.value = "grams";
+  const isPortion = mode.value === "portion";
+  weightLabel.classList.toggle("hidden", isPortion);
+  portionWrap.classList.toggle("hidden", !isPortion);
+}
+
+function syncTimestampMode() {
+  const isAuto = elements.mealTimestampAuto.checked;
+  elements.mealTimestamp.disabled = isAuto;
+  if (autoTimestampTimer) {
+    window.clearInterval(autoTimestampTimer);
+    autoTimestampTimer = null;
+  }
+
+  if (isAuto) {
+    elements.mealTimestamp.value = nowLocalValue();
+    autoTimestampTimer = window.setInterval(() => {
+      elements.mealTimestamp.value = nowLocalValue();
+    }, 1000);
+  }
 }
 
 function hideInlineError(node) {

@@ -1,7 +1,7 @@
-const savedBase = localStorage.getItem("mealctl.apiBase") || "http://localhost:8000";
+import { API_BASE } from "./config.js";
 
 export const state = {
-  apiBase: savedBase,
+  apiBase: API_BASE,
   nutrients: {},
   summaryDate: today(),
   summary: [],
@@ -26,9 +26,4 @@ export const state = {
 
 export function today() {
   return new Date().toISOString().slice(0, 10);
-}
-
-export function setApiBase(value) {
-  state.apiBase = value || "/api/meal";
-  localStorage.setItem("mealctl.apiBase", state.apiBase);
 }

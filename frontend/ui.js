@@ -1,3 +1,5 @@
+import { IMPORTANT_NUTRIENT_IDS } from "./config.js";
+
 function createElement(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -73,20 +75,50 @@ export function renderFoodDetails(container, food, nutrientMap) {
     }
   }
 
-  const nutrients = createElement("div", "nutrient-table");
-  nutrients.append(createElement("h3", "", "Nutrients per 100 g"));
+  const nutrients = createElement("div", "food-section nutrient-table");
   const nutrientRows = Object.entries(food.nutrients || {}).sort((a, b) => {
     const left = nutrientMap[a[0]]?.name || a[0];
     const right = nutrientMap[b[0]]?.name || b[0];
     return left.localeCompare(right);
   });
+
+  const importantIds = new Set(IMPORTANT_NUTRIENT_IDS);
+  const importantRows = nutrientRows.filter(([id]) => importantIds.has(Number(id)));
+  const collapsedRows = importantRows.length ? importantRows : nutrientRows.slice(0, 6);
+  const expanded = false;
+
+  const titleRow = createElement("div", "section-header-inline");
+  titleRow.append(createElement("h3", "", "Nutrients per 100 g"));
+
   if (!nutrientRows.length) {
-    nutrients.append(createElement("div", "empty-state", "No nutrient data available."));
+    nutrients.append(titleRow, createElement("div", "empty-state", "No nutrient data available."));
   } else {
-    for (const [id, amount] of nutrientRows) {
-      const nutrient = nutrientMap[id] || { name: `#${id}`, unit: "" };
-      nutrients.append(createElement("div", "portion-item", `${nutrient.name}: ${formatAmount(amount)} ${nutrient.unit}`));
+    const list = createElement("div", "nutrient-table");
+    const shouldToggle = nutrientRows.length > collapsedRows.length;
+    const toggle = createElement("button", "inline-toggle", "Show all");
+    toggle.type = "button";
+
+    const renderRows = (showAll) => {
+      list.textContent = "";
+      const rows = showAll ? nutrientRows : collapsedRows;
+      for (const [id, amount] of rows) {
+        const nutrient = nutrientMap[id] || { name: `#${id}`, unit: "" };
+        list.append(createElement("div", "portion-item", `${nutrient.name}: ${formatAmount(amount)} ${nutrient.unit}`));
+      }
+      toggle.textContent = showAll ? "Show fewer" : "Show all";
+    };
+
+    let isExpanded = expanded;
+    if (shouldToggle) {
+      toggle.addEventListener("click", () => {
+        isExpanded = !isExpanded;
+        renderRows(isExpanded);
+      });
+      titleRow.append(toggle);
     }
+
+    nutrients.append(titleRow, list);
+    renderRows(isExpanded);
   }
 
   container.append(header, details, portions, nutrients);

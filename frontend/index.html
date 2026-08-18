@@ -13,14 +13,6 @@
         <p class="eyebrow">Food intake tracker</p>
         <h1>Mealctl</h1>
       </div>
-
-      <form id="settings-form" class="settings-panel">
-        <label>
-          <span>API path</span>
-          <input id="api-base-input" name="apiBase" type="text" value="/api/meal" spellcheck="false">
-        </label>
-        <button type="submit">Save</button>
-      </form>
     </header>
 
     <div id="global-error" class="banner hidden" role="alert"></div>
@@ -79,7 +71,13 @@
             <form id="log-meal-form" class="stack-md hidden">
               <label>
                 <span>Timestamp</span>
-                <input id="meal-timestamp" name="timestamp" type="datetime-local" required>
+                <div class="timestamp-row">
+                  <label class="checkbox-row">
+                    <input id="meal-timestamp-auto" name="timestampAuto" type="checkbox" checked>
+                    <span>Auto</span>
+                  </label>
+                  <input id="meal-timestamp" name="timestamp" type="datetime-local" required>
+                </div>
               </label>
 
               <div class="portion-grid">
@@ -91,20 +89,24 @@
                   </select>
                 </label>
 
-                <label>
-                  <span>Grams</span>
-                  <input id="grams-input" name="grams" type="number" min="0" step="0.1" value="100">
-                </label>
+                <div id="grams-fields" class="quantity-fields quantity-fields-active">
+                  <label>
+                    <span>Grams</span>
+                    <input id="grams-input" name="grams" type="number" min="0" step="0.1" value="100">
+                  </label>
+                </div>
 
-                <label>
-                  <span>Portion</span>
-                  <select id="portion-select" name="portion"></select>
-                </label>
+                <div id="portion-fields" class="quantity-fields hidden">
+                  <label>
+                    <span>Portion</span>
+                    <select id="portion-select" name="portion"></select>
+                  </label>
 
-                <label>
-                  <span>Count</span>
-                  <input id="portion-count" name="count" type="number" min="0" step="0.1" value="1">
-                </label>
+                  <label>
+                    <span>Count</span>
+                    <input id="portion-count" name="count" type="number" min="0" step="0.1" value="1">
+                  </label>
+                </div>
               </div>
 
               <p id="computed-weight" class="status-line"></p>
