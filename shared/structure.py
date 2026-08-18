@@ -6,11 +6,9 @@ class Nutrient(BaseModel):
     id: int
     name: str
     unit: str
-    number: Optional[str] = ''
-    rank: Optional[int] = 0
 
-    def __init__(self, id: int, name: str, unit: str, **kwargs):
-        super().__init__(id=id, name=name, unit=unit, **kwargs)
+    def __init__(self, id: int, name: str, unit: str):
+        super().__init__(id=id, name=name, unit=unit.lower())
 
 class MeasureUnit(BaseModel):
     id: int
@@ -36,9 +34,10 @@ class Food(BaseModel):
         super().__init__(fdcId=fdcId, description=description, dataType=dataType, **kwargs)
 
 class Meal(BaseModel):
+    id: int
     weight: float
     timestamp: datetime
     food: Food
 
-    def __init__(self, weight: float, timestamp: datetime, food: Food, **kwargs):
-        super().__init__(weight=weight, timestamp=timestamp, food=food, **kwargs)
+    def __init__(self, id: int, weight: float, timestamp: datetime, food: Food, **kwargs):
+        super().__init__(id=id, weight=weight, timestamp=timestamp, food=food, **kwargs)

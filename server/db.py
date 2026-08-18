@@ -24,6 +24,9 @@ class DBHandler:
         return self
 
     def __exit__(self, a, b, c):
+        self.close()
+
+    def close(self):
         self.conn.commit()
         self.conn.close()
 
@@ -56,6 +59,15 @@ class DBHandler:
             Food
         )
 
+    def getFood(self, fdcId: int) -> Food | None:
+        res = self._fetchList(
+            "SELECT fdc_id, description, data_type FROM food WHERE fdc_id = ? AND data_type = 'foundation_food'",
+            (fdcId,),
+            Food
+        )
+        if not res: return None
+        return res[0]
+
     def getFoodPortions(self, food: Food) -> dict[int, FoodPortion]:
         return self._fetchDict(
             "SELECT p.id, p.amount, u.name, p.gram_weight FROM food_portion AS p LEFT JOIN measure_unit AS u ON p.measure_unit_id = u.id WHERE fdc_id = ?",
@@ -70,17 +82,23 @@ class DBHandler:
             lambda id, amount: amount
         )
 
-    def logMeal(self, food: Food, weight: float):
-        self.cur.execute('INSERT INTO user.consumed_food (fdc_id, weight) VALUES (?, ?)', (food.fdcId, weight))
+    def logMeal(self, food: Food, weight: float, timestamp: datetime | None = None):
+        if timestamp is None:
+            self.cur.execute('INSERT INTO user.consumed_food (fdc_id, weight) VALUES (?, ?)', (food.fdcId, weight))
+        else:
+            self.cur.execute('INSERT INTO user.consumed_food (fdc_id, weight, timestamp) VALUES (?, ?, ?)', (food.fdcId, weight, timestamp))
+
+    def deleteMeal(self, mealId: int):
+        self.cur.execute('DELETE FROM user.consumed_food WHERE id = ?', (mealId,))
 
     def getMeals(self, start: datetime, end: datetime) -> list[Meal]:
         return self._fetchList(
-            """SELECT c.weight, c.timestamp, f.fdc_id, f.description, f.data_type
+            """SELECT c.id, c.weight, c.timestamp, f.fdc_id, f.description, f.data_type
             FROM user.consumed_food AS c 
             LEFT JOIN food AS f ON f.fdc_id = c.fdc_id
             WHERE ? <= timestamp AND timestamp < ?""",
             (start.isoformat(' '), end.isoformat(' ')),
-            lambda w, t, fid, fd, fdt: Meal(w, t, Food(fid, fd, fdt))
+            lambda id, w, t, fid, fd, fdt: Meal(id, w, t, Food(fid, fd, fdt))
         )
 
     def getConsumedNutrients(self, start: datetime, end: datetime) -> dict[int, float]:
