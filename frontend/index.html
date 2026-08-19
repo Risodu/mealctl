@@ -81,13 +81,13 @@
               </label>
 
               <div class="portion-grid">
-                <label>
+                <div class="choice-group-block">
                   <span>Mode</span>
-                  <select id="quantity-mode" name="mode">
-                    <option value="grams">Grams</option>
-                    <option value="portion">Portion</option>
-                  </select>
-                </label>
+                  <div id="quantity-mode" class="choice-group" role="group" aria-label="Weight mode">
+                    <button type="button" class="choice-chip is-active" data-mode-value="grams">Grams</button>
+                    <button type="button" class="choice-chip" data-mode-value="portion">Portion</button>
+                  </div>
+                </div>
 
                 <div id="grams-fields" class="quantity-fields quantity-fields-active">
                   <label>
@@ -97,10 +97,10 @@
                 </div>
 
                 <div id="portion-fields" class="quantity-fields hidden">
-                  <label>
+                  <div class="choice-group-block span-2">
                     <span>Portion</span>
-                    <select id="portion-select" name="portion"></select>
-                  </label>
+                    <div id="portion-select" class="choice-group choice-group-wrap" role="group" aria-label="Portion select"></div>
+                  </div>
 
                   <label>
                     <span>Count</span>
@@ -152,15 +152,15 @@
         <div class="card stack-lg">
           <form id="custom-food-form" class="stack-lg">
             <div class="portion-grid">
-              <label>
+              <div class="choice-group-block span-2">
                 <span>Action</span>
-                <select id="custom-action" name="action">
-                  <option value="addBrandedFood">Create branded food</option>
-                  <option value="addRecipeFood">Create recipe food</option>
-                  <option value="editBrandedFood">Edit branded food</option>
-                  <option value="editRecipeFood">Edit recipe food</option>
-                </select>
-              </label>
+                <div id="custom-action" class="choice-group choice-group-wrap" role="group" aria-label="Custom food action">
+                  <button type="button" class="choice-chip is-active" data-action-value="addBrandedFood">Create branded food</button>
+                  <button type="button" class="choice-chip" data-action-value="addRecipeFood">Create recipe food</button>
+                  <button type="button" class="choice-chip" data-action-value="editBrandedFood">Edit branded food</button>
+                  <button type="button" class="choice-chip" data-action-value="editRecipeFood">Edit recipe food</button>
+                </div>
+              </div>
 
               <label id="custom-fdc-wrap" class="hidden">
                 <span>Food id</span>

@@ -57,6 +57,12 @@ select {
   color: var(--text);
 }
 
+input:disabled {
+  color: rgba(31, 36, 29, 0.55);
+  background: rgba(255, 253, 248, 0.52);
+  border-color: rgba(69, 82, 49, 0.12);
+}
+
 label {
   display: grid;
   gap: 0.35rem;
@@ -278,6 +284,42 @@ p {
   flex: 1 1 180px;
 }
 
+.choice-group-block {
+  display: grid;
+  gap: 0.35rem;
+  flex: 1 1 180px;
+}
+
+.choice-group-block > span {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.choice-group {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.choice-group-wrap {
+  flex-wrap: wrap;
+}
+
+.choice-chip {
+  border-radius: 14px;
+  padding: 0.68rem 0.95rem;
+}
+
+.choice-chip.is-active {
+  background: var(--accent);
+  color: #fffdf8;
+  border-color: var(--accent);
+}
+
+.choice-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .quantity-fields {
   display: flex;
   flex: 1 1 100%;
@@ -406,6 +448,21 @@ p {
 .ingredient-portion-wrap {
   grid-column: 1 / -1;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ingredient-picker {
+  position: relative;
+}
+
+.ingredient-picker-results {
+  display: grid;
+  gap: 0.4rem;
+  max-height: 14rem;
+  overflow: auto;
+  padding: 0.25rem;
+  border-radius: 16px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
 }
 
 .hidden {

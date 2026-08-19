@@ -1,12 +1,15 @@
 import { createApi } from "./api.js";
 import { IMPORTANT_NUTRIENT_IDS } from "./config.js";
 import { state, today } from "./state.js";
-import { renderFoodDetails, renderIngredientOptions, renderResultList, renderSummary } from "./ui.js";
+import { renderFoodDetails, renderResultList, renderSummary } from "./ui.js";
 
 const api = createApi(() => state.apiBase);
 let searchTimer = null;
 let browserTimer = null;
 let autoTimestampTimer = null;
+let quantityMode = "grams";
+let selectedPortionId = null;
+let customAction = "addBrandedFood";
 
 const elements = {
   globalError: document.querySelector("#global-error"),
@@ -25,6 +28,7 @@ const elements = {
   mealTimestampAuto: document.querySelector("#meal-timestamp-auto"),
   mealTimestamp: document.querySelector("#meal-timestamp"),
   quantityMode: document.querySelector("#quantity-mode"),
+  quantityModeButtons: [...document.querySelectorAll("#quantity-mode [data-mode-value]")],
   gramsFields: document.querySelector("#grams-fields"),
   portionFields: document.querySelector("#portion-fields"),
   gramsInput: document.querySelector("#grams-input"),
@@ -38,6 +42,7 @@ const elements = {
   foodsDetailPanel: document.querySelector("#foods-detail-panel"),
   customFoodForm: document.querySelector("#custom-food-form"),
   customAction: document.querySelector("#custom-action"),
+  customActionButtons: [...document.querySelectorAll("#custom-action [data-action-value]")],
   customFdcWrap: document.querySelector("#custom-fdc-wrap"),
   customFdcId: document.querySelector("#custom-fdc-id"),
   customName: document.querySelector("#custom-name"),
@@ -90,14 +95,25 @@ function bindEvents() {
   });
 
   elements.mealTimestampAuto.addEventListener("change", syncTimestampMode);
-  elements.quantityMode.addEventListener("change", syncQuantityMode);
+  for (const button of elements.quantityModeButtons) {
+    button.addEventListener("click", () => {
+      if (button.disabled) return;
+      quantityMode = button.dataset.modeValue;
+      syncQuantityMode();
+    });
+  }
   elements.gramsInput.addEventListener("input", renderComputedWeight);
-  elements.portionSelect.addEventListener("change", renderComputedWeight);
   elements.portionCount.addEventListener("input", renderComputedWeight);
 
   elements.logMealForm.addEventListener("submit", submitLogMeal);
 
-  elements.customAction.addEventListener("change", updateCustomFormMode);
+  for (const button of elements.customActionButtons) {
+    button.addEventListener("click", () => {
+      customAction = button.dataset.actionValue;
+      updateCustomActionButtons();
+      updateCustomFormMode();
+    });
+  }
   elements.addNutrientRow.addEventListener("click", () => addNutrientRow());
   elements.addIngredientRow.addEventListener("click", () => addIngredientRow());
   elements.addPortionRow.addEventListener("click", () => addPortionRow());
@@ -183,12 +199,6 @@ async function performSearch(mode, query) {
     status.textContent = `${results.length} result${results.length === 1 ? "" : "s"}.`;
     renderResultList(target, results, (item) => selectFood(item.fdcId, mode));
     clearGlobalError();
-
-    if (mode === "browse") {
-      for (const row of document.querySelectorAll(".ingredient-food-select")) {
-        renderIngredientOptions(row, results);
-      }
-    }
   } catch (error) {
     status.textContent = "";
     target.textContent = "";
@@ -222,35 +232,48 @@ async function selectFood(fdcId, source) {
 function fillPortions(food) {
   elements.portionSelect.textContent = "";
   const portions = Object.values(food.portions || {});
-  const portionOption = [...elements.quantityMode.options].find((option) => option.value === "portion");
+  const portionButton = elements.quantityModeButtons.find((button) => button.dataset.modeValue === "portion");
   if (!portions.length) {
-    const option = document.createElement("option");
-    option.value = "";
-    option.textContent = "No named portions";
-    elements.portionSelect.append(option);
-    if (portionOption) portionOption.disabled = true;
-    elements.quantityMode.value = "grams";
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "No named portions";
+    elements.portionSelect.append(empty);
+    if (portionButton) portionButton.disabled = true;
+    selectedPortionId = null;
+    quantityMode = "grams";
+    updateQuantityModeButtons();
     return;
   }
 
-  if (portionOption) portionOption.disabled = false;
+  if (portionButton) portionButton.disabled = false;
 
   for (const portion of portions) {
-    const option = document.createElement("option");
-    option.value = portion.id;
-    option.dataset.weight = portion.weight;
-    option.textContent = `${portion.amount} ${portion.unit || "portion"} = ${portion.weight} g`;
-    elements.portionSelect.append(option);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "choice-chip";
+    button.dataset.portionId = String(portion.id);
+    button.dataset.weight = String(portion.weight);
+    button.textContent = `${portion.amount} ${portion.unit || "portion"} = ${portion.weight} g`;
+    button.addEventListener("click", () => {
+      selectedPortionId = String(portion.id);
+      updatePortionButtons();
+      renderComputedWeight();
+    });
+    elements.portionSelect.append(button);
   }
+
+  selectedPortionId = String(portions[0].id);
+  updatePortionButtons();
 }
 
 function syncQuantityMode() {
   const hasPortions = !!state.selectedFood && Object.keys(state.selectedFood.portions || {}).length > 0;
-  if (elements.quantityMode.value === "portion" && !hasPortions) {
-    elements.quantityMode.value = "grams";
+  if (quantityMode === "portion" && !hasPortions) {
+    quantityMode = "grams";
   }
 
-  const isPortionMode = elements.quantityMode.value === "portion" && hasPortions;
+  updateQuantityModeButtons();
+  const isPortionMode = quantityMode === "portion" && hasPortions;
   elements.gramsFields.classList.toggle("hidden", isPortionMode);
   elements.portionFields.classList.toggle("hidden", !isPortionMode);
   renderComputedWeight();
@@ -267,7 +290,7 @@ function renderComputedWeight() {
 }
 
 function getComputedWeight() {
-  if (elements.quantityMode.value === "grams") {
+  if (quantityMode === "grams") {
     const grams = Number(elements.gramsInput.value);
     return {
       weight: grams,
@@ -282,7 +305,7 @@ function getComputedWeight() {
     };
   }
 
-  const selected = elements.portionSelect.selectedOptions[0];
+  const selected = elements.portionSelect.querySelector(`[data-portion-id="${selectedPortionId}"]`);
   const portionWeight = Number(selected?.dataset.weight);
   const count = Number(elements.portionCount.value);
   const weight = portionWeight * count;
@@ -333,7 +356,7 @@ async function deleteMeal(mealId) {
 }
 
 function updateCustomFormMode() {
-  const action = elements.customAction.value;
+  const action = customAction;
   const isRecipe = action === "addRecipeFood" || action === "editRecipeFood";
   const isEdit = action === "editBrandedFood" || action === "editRecipeFood";
 
@@ -378,22 +401,20 @@ function addNutrientRow(preferredId = null) {
 function addIngredientRow() {
   const row = document.createElement("div");
   row.className = "dynamic-row ingredients-row";
+  row.dataset.selectedFdcId = "";
 
   const searchLabel = document.createElement("label");
+  searchLabel.className = "ingredient-picker";
   searchLabel.append(document.createElement("span"));
-  searchLabel.firstChild.textContent = "Search ingredient";
+  searchLabel.firstChild.textContent = "Ingredient";
   const search = document.createElement("input");
   search.type = "search";
   search.placeholder = "banana, oats, milk...";
   search.className = "ingredient-search-input";
   searchLabel.append(search);
-
-  const foodLabel = document.createElement("label");
-  foodLabel.append(document.createElement("span"));
-  foodLabel.firstChild.textContent = "Ingredient";
-  const select = document.createElement("select");
-  select.className = "ingredient-food-select";
-  foodLabel.append(select);
+  const results = document.createElement("div");
+  results.className = "ingredient-picker-results hidden";
+  searchLabel.append(results);
 
   const weightLabel = document.createElement("label");
   weightLabel.append(document.createElement("span"));
@@ -415,12 +436,13 @@ function addIngredientRow() {
 
   const portionWrap = document.createElement("div");
   portionWrap.className = "stack-md hidden ingredient-portion-wrap";
-  const portionLabel = document.createElement("label");
-  portionLabel.append(document.createElement("span"));
-  portionLabel.firstChild.textContent = "Portion";
-  const portionSelect = document.createElement("select");
-  portionSelect.className = "ingredient-portion-select";
-  portionLabel.append(portionSelect);
+  const portionLabel = document.createElement("div");
+  portionLabel.className = "choice-group-block";
+  const portionTitle = document.createElement("span");
+  portionTitle.textContent = "Portion";
+  const portionSelect = document.createElement("div");
+  portionSelect.className = "choice-group choice-group-wrap ingredient-portion-select";
+  portionLabel.append(portionTitle, portionSelect);
 
   const countLabel = document.createElement("label");
   countLabel.append(document.createElement("span"));
@@ -434,34 +456,30 @@ function addIngredientRow() {
   countLabel.append(count);
   portionWrap.append(portionLabel, countLabel);
 
-  renderIngredientOptions(select, Object.values(state.foodCache));
   search.addEventListener("input", () => {
     const query = search.value.trim();
+    row.dataset.selectedFdcId = "";
     window.clearTimeout(search._timer);
     search._timer = window.setTimeout(async () => {
       if (query.length < 2) {
-        renderIngredientOptions(select, Object.values(state.foodCache));
+        results.textContent = "";
+        results.classList.add("hidden");
         return;
       }
 
       try {
-        const results = Object.values(await api.searchFoods(query));
-        renderIngredientOptions(select, results);
-        void syncIngredientPortions(row);
+        const matches = Object.values(await api.searchFoods(query));
+        renderIngredientPickerResults(row, matches);
       } catch (error) {
         showInlineError(elements.customFormError, error.message);
       }
     }, 250);
   });
 
-  select.addEventListener("change", () => {
-    void syncIngredientPortions(row);
-  });
   mode.addEventListener("change", () => syncIngredientMode(row));
 
-  row.append(searchLabel, foodLabel, modeLabel, weightLabel, removeButton(() => row.remove()), portionWrap);
+  row.append(searchLabel, modeLabel, weightLabel, removeButton(() => row.remove()), portionWrap);
   elements.ingredientsList.append(row);
-  void syncIngredientPortions(row);
 }
 
 function addPortionRow() {
@@ -515,7 +533,7 @@ function syncNutrientSelects() {
 }
 
 function seedBrandedNutrientsIfNeeded() {
-  if (elements.customAction.value === "addRecipeFood" || elements.customAction.value === "editRecipeFood") return;
+  if (customAction === "addRecipeFood" || customAction === "editRecipeFood") return;
   if (elements.nutrientRows.children.length) return;
   for (const id of IMPORTANT_NUTRIENT_IDS) {
     addNutrientRow(id);
@@ -524,14 +542,13 @@ function seedBrandedNutrientsIfNeeded() {
 
 async function submitCustomFood(event) {
   event.preventDefault();
-  const action = elements.customAction.value;
+  const action = customAction;
 
   try {
     const payload = buildCustomPayload(action);
     await api[action](payload);
     hideInlineError(elements.customFormError);
     elements.customFoodForm.reset();
-    elements.customAction.value = action;
     elements.customName.value = "";
     elements.nutrientRows.textContent = "";
     elements.ingredientsList.textContent = "";
@@ -581,11 +598,11 @@ function buildCustomPayload(action) {
 
   if (isRecipe) {
     payload.ingredients = [...elements.ingredientsList.querySelectorAll(".dynamic-row")].map((row) => {
-      const fdcId = Number(row.querySelector(".ingredient-food-select").value);
+      const fdcId = Number(row.dataset.selectedFdcId);
       const mode = row.querySelector(".ingredient-mode-select").value;
       let weight;
       if (mode === "portion") {
-        const selected = row.querySelector(".ingredient-portion-select").selectedOptions[0];
+        const selected = row.querySelector(".ingredient-portion-select .choice-chip.is-active");
         const portionWeight = Number(selected?.dataset.weight);
         const count = Number(row.querySelector(".ingredient-count-input").value);
         weight = portionWeight * count;
@@ -654,10 +671,9 @@ async function getFoodDetailsCached(fdcId) {
 }
 
 async function syncIngredientPortions(row) {
-  const select = row.querySelector(".ingredient-food-select");
   const portionSelect = row.querySelector(".ingredient-portion-select");
   const mode = row.querySelector(".ingredient-mode-select");
-  const fdcId = Number(select.value);
+  const fdcId = Number(row.dataset.selectedFdcId);
 
   portionSelect.textContent = "";
   if (!Number.isInteger(fdcId) || fdcId <= 0) {
@@ -672,21 +688,28 @@ async function syncIngredientPortions(row) {
     const portionOption = [...mode.options].find((option) => option.value === "portion");
 
     if (!portions.length) {
-      const option = document.createElement("option");
-      option.value = "";
-      option.textContent = "No named portions";
-      portionSelect.append(option);
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "No named portions";
+      portionSelect.append(empty);
       if (portionOption) portionOption.disabled = true;
       mode.value = "grams";
     } else {
       if (portionOption) portionOption.disabled = false;
       for (const portion of portions) {
-        const option = document.createElement("option");
-        option.value = portion.id;
-        option.dataset.weight = portion.weight;
-        option.textContent = `${portion.amount} ${portion.unit || "portion"} = ${portion.weight} g`;
-        portionSelect.append(option);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "choice-chip";
+        button.dataset.portionId = String(portion.id);
+        button.dataset.weight = String(portion.weight);
+        button.textContent = `${portion.amount} ${portion.unit || "portion"} = ${portion.weight} g`;
+        button.addEventListener("click", () => {
+          for (const chip of portionSelect.querySelectorAll(".choice-chip")) chip.classList.remove("is-active");
+          button.classList.add("is-active");
+        });
+        portionSelect.append(button);
       }
+      portionSelect.querySelector(".choice-chip")?.classList.add("is-active");
     }
 
     syncIngredientMode(row);
@@ -700,11 +723,64 @@ function syncIngredientMode(row) {
   const weightLabel = row.querySelector(".ingredient-weight-input").closest("label");
   const portionWrap = row.querySelector(".ingredient-portion-wrap");
   const portionSelect = row.querySelector(".ingredient-portion-select");
-  const hasPortions = !!portionSelect.options.length && portionSelect.options[0].value !== "";
+  const hasPortions = !!portionSelect.querySelector(".choice-chip");
   if (mode.value === "portion" && !hasPortions) mode.value = "grams";
   const isPortion = mode.value === "portion";
   weightLabel.classList.toggle("hidden", isPortion);
   portionWrap.classList.toggle("hidden", !isPortion);
+}
+
+function updateQuantityModeButtons() {
+  for (const button of elements.quantityModeButtons) {
+    button.classList.toggle("is-active", button.dataset.modeValue === quantityMode);
+  }
+}
+
+function updatePortionButtons() {
+  for (const button of elements.portionSelect.querySelectorAll(".choice-chip")) {
+    button.classList.toggle("is-active", button.dataset.portionId === selectedPortionId);
+  }
+}
+
+function updateCustomActionButtons() {
+  for (const button of elements.customActionButtons) {
+    button.classList.toggle("is-active", button.dataset.actionValue === customAction);
+  }
+}
+
+function renderIngredientPickerResults(row, matches) {
+  const results = row.querySelector(".ingredient-picker-results");
+  const search = row.querySelector(".ingredient-search-input");
+  results.textContent = "";
+  if (!matches.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "No matching foods.";
+    results.append(empty);
+    results.classList.remove("hidden");
+    return;
+  }
+
+  for (const item of matches) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "result-item";
+    const title = document.createElement("strong");
+    title.textContent = item.description;
+    const meta = document.createElement("small");
+    meta.textContent = `${item.dataType} · #${item.fdcId}`;
+    button.append(title, meta);
+    button.addEventListener("click", () => {
+      row.dataset.selectedFdcId = String(item.fdcId);
+      search.value = item.description;
+      results.classList.add("hidden");
+      results.textContent = "";
+      void syncIngredientPortions(row);
+    });
+    results.append(button);
+  }
+
+  results.classList.remove("hidden");
 }
 
 function syncTimestampMode() {
