@@ -426,13 +426,24 @@ function addIngredientRow() {
   weight.className = "ingredient-weight-input";
   weightLabel.append(weight);
 
-  const modeLabel = document.createElement("label");
-  modeLabel.append(document.createElement("span"));
-  modeLabel.firstChild.textContent = "Mode";
-  const mode = document.createElement("select");
-  mode.className = "ingredient-mode-select";
-  mode.innerHTML = '<option value="grams">Grams</option><option value="portion">Portion</option>';
-  modeLabel.append(mode);
+  const modeLabel = document.createElement("div");
+  modeLabel.className = "choice-group-block";
+  const modeTitle = document.createElement("span");
+  modeTitle.textContent = "Mode";
+  const mode = document.createElement("div");
+  mode.className = "choice-group ingredient-mode-group";
+  const gramsButton = document.createElement("button");
+  gramsButton.type = "button";
+  gramsButton.className = "choice-chip is-active";
+  gramsButton.dataset.modeValue = "grams";
+  gramsButton.textContent = "Grams";
+  const portionButton = document.createElement("button");
+  portionButton.type = "button";
+  portionButton.className = "choice-chip";
+  portionButton.dataset.modeValue = "portion";
+  portionButton.textContent = "Portion";
+  mode.append(gramsButton, portionButton);
+  modeLabel.append(modeTitle, mode);
 
   const portionWrap = document.createElement("div");
   portionWrap.className = "stack-md hidden ingredient-portion-wrap";
@@ -476,7 +487,15 @@ function addIngredientRow() {
     }, 250);
   });
 
-  mode.addEventListener("change", () => syncIngredientMode(row));
+  gramsButton.addEventListener("click", () => {
+    row.dataset.ingredientMode = "grams";
+    syncIngredientMode(row);
+  });
+  portionButton.addEventListener("click", () => {
+    if (portionButton.disabled) return;
+    row.dataset.ingredientMode = "portion";
+    syncIngredientMode(row);
+  });
 
   row.append(searchLabel, modeLabel, weightLabel, removeButton(() => row.remove()), portionWrap);
   elements.ingredientsList.append(row);
@@ -599,7 +618,7 @@ function buildCustomPayload(action) {
   if (isRecipe) {
     payload.ingredients = [...elements.ingredientsList.querySelectorAll(".dynamic-row")].map((row) => {
       const fdcId = Number(row.dataset.selectedFdcId);
-      const mode = row.querySelector(".ingredient-mode-select").value;
+      const mode = row.dataset.ingredientMode || "grams";
       let weight;
       if (mode === "portion") {
         const selected = row.querySelector(".ingredient-portion-select .choice-chip.is-active");
@@ -672,12 +691,12 @@ async function getFoodDetailsCached(fdcId) {
 
 async function syncIngredientPortions(row) {
   const portionSelect = row.querySelector(".ingredient-portion-select");
-  const mode = row.querySelector(".ingredient-mode-select");
+  const portionButton = row.querySelector('[data-mode-value="portion"]');
   const fdcId = Number(row.dataset.selectedFdcId);
 
   portionSelect.textContent = "";
   if (!Number.isInteger(fdcId) || fdcId <= 0) {
-    mode.value = "grams";
+    row.dataset.ingredientMode = "grams";
     syncIngredientMode(row);
     return;
   }
@@ -685,17 +704,16 @@ async function syncIngredientPortions(row) {
   try {
     const food = await getFoodDetailsCached(fdcId);
     const portions = Object.values(food.portions || {});
-    const portionOption = [...mode.options].find((option) => option.value === "portion");
 
     if (!portions.length) {
       const empty = document.createElement("div");
       empty.className = "empty-state";
       empty.textContent = "No named portions";
       portionSelect.append(empty);
-      if (portionOption) portionOption.disabled = true;
-      mode.value = "grams";
+      if (portionButton) portionButton.disabled = true;
+      row.dataset.ingredientMode = "grams";
     } else {
-      if (portionOption) portionOption.disabled = false;
+      if (portionButton) portionButton.disabled = false;
       for (const portion of portions) {
         const button = document.createElement("button");
         button.type = "button";
@@ -719,13 +737,17 @@ async function syncIngredientPortions(row) {
 }
 
 function syncIngredientMode(row) {
-  const mode = row.querySelector(".ingredient-mode-select");
   const weightLabel = row.querySelector(".ingredient-weight-input").closest("label");
   const portionWrap = row.querySelector(".ingredient-portion-wrap");
   const portionSelect = row.querySelector(".ingredient-portion-select");
+  const mode = row.dataset.ingredientMode || "grams";
   const hasPortions = !!portionSelect.querySelector(".choice-chip");
-  if (mode.value === "portion" && !hasPortions) mode.value = "grams";
-  const isPortion = mode.value === "portion";
+  if (mode === "portion" && !hasPortions) row.dataset.ingredientMode = "grams";
+  const activeMode = row.dataset.ingredientMode || "grams";
+  const isPortion = activeMode === "portion";
+  for (const button of row.querySelectorAll(".ingredient-mode-group .choice-chip")) {
+    button.classList.toggle("is-active", button.dataset.modeValue === activeMode);
+  }
   weightLabel.classList.toggle("hidden", isPortion);
   portionWrap.classList.toggle("hidden", !isPortion);
 }

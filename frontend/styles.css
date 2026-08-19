@@ -447,7 +447,7 @@ p {
 
 .ingredient-portion-wrap {
   grid-column: 1 / -1;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(7rem, 9rem);
 }
 
 .ingredient-picker {
@@ -455,6 +455,11 @@ p {
 }
 
 .ingredient-picker-results {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 10;
   display: grid;
   gap: 0.4rem;
   max-height: 14rem;
@@ -463,6 +468,7 @@ p {
   border-radius: 16px;
   background: var(--surface-strong);
   border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
 .hidden {
