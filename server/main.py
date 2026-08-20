@@ -2,6 +2,8 @@ from datetime import datetime
 from flask import Flask, Response, request
 from mealctl.server.db import DBHandler
 from pydantic_core import to_json, to_jsonable_python
+import pydantic
+from flask_pydantic import validate
 from werkzeug.exceptions import HTTPException
 from mealctl.shared.diet import DietConfig
 
@@ -44,51 +46,31 @@ def getFoodDetails(fdcId: int):
 
     return Response(to_json(data), 200, mimetype='application/json')
 
+class LogMealRequest(pydantic.BaseModel):
+    fdc_id: int
+    weight: float
+    timestamp: datetime
+
 @app.route('/logMeal', methods=['POST'])
-def logMeal():
-    data = request.json
-    fdcId = data.get('fdc_id')
-    weight = data.get('weight')
-    timestamp = data.get('timestamp')
-
-    if fdcId is None or weight is None or timestamp is None:
-        return 'Missing fields', 400
-
-    if not isinstance(fdcId, int):
-        return 'Malformed FDC id', 400
-
-    if isinstance(weight, int):
-        weight = float(weight)
-
-    if not isinstance(weight, float):
-        return 'Malformed weight', 400
-
-    try:
-        dt = datetime.fromisoformat(timestamp)
-    except ValueError:
-        return 'Malformed timestamp', 400
-
+@validate()
+def logMeal(body: LogMealRequest):
     with DBHandler(DATA) as dbh:
-        food = dbh.getFood(fdcId)
+        food = dbh.getFood(body.fdc_id)
         if food is None:
             return 'Invalid food id', 422
 
-        dbh.logMeal(food, weight, dt)
+        dbh.logMeal(food, body.weight, body.timestamp)
 
-    return Response('{}', 200, mimetype='application/json')
+    return Response('{}', 201, mimetype='application/json')
+
+class DeleteMealRequest(pydantic.BaseModel):
+    meal_id: int
 
 @app.route('/deleteMeal', methods=['POST'])
-def deleteMeal():
-    data = request.json
-    id = data.get('meal_id')
-    if id is None:
-        return 'Missing fields', 400
-
-    if not isinstance(id, int):
-        return 'Malformed id', 400
-
+@validate()
+def deleteMeal(body: DeleteMealRequest):
     with DBHandler(DATA) as dbh:
-        dbh.deleteMeal(id) # TODO: verify it meal exists
+        dbh.deleteMeal(body.meal_id) # TODO: verify it meal exists
 
     return Response('{}', 200, mimetype='application/json')
 
@@ -148,7 +130,9 @@ def summary(timestamp):
     with DBHandler(DATA) as dbh:
         return Response(to_json(getSummary(dbh, dt)), 200, mimetype='application/json')
 
-@app.route('/addBrandedFood')
+# def addBrandedFood():
+
+@app.route('/addBrandedFood', methods=['POST'])
 @app.route('/addRecipeFood')
 @app.route('/editBrandedFood')
 @app.route('/editRecipeFood')
