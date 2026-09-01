@@ -155,7 +155,7 @@ while unsuccessful requests respond with status `4xx` and plain text content.
     "portions": [
         {
             "amount": 1,
-            "name": "package",
+            "unit": "package",
             "weight": 40
         }
     ]
@@ -182,7 +182,7 @@ while unsuccessful requests respond with status `4xx` and plain text content.
     "portions": [
         {
             "amount": 1,
-            "name": "bowl",
+            "unit": "bowl",
             "weight": 60
         }
     ]

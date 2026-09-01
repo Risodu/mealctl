@@ -507,7 +507,7 @@ function addPortionRow() {
 
   row.append(
     textField("Amount", "portion-amount-input", "number", { step: "0.1", min: "0", value: "1" }),
-    textField("Name", "portion-name-input", "text"),
+    textField("Unit", "portion-unit-input", "text"),
     textField("Weight (g)", "portion-weight-input", "number", { step: "0.1", min: "0" }),
     document.createElement("div"),
     removeButton(() => row.remove()),
@@ -603,12 +603,12 @@ function buildCustomPayload(action) {
 
   payload.portions = [...elements.portionRows.querySelectorAll(".dynamic-row")].map((row) => {
     const amount = Number(row.querySelector(".portion-amount-input").value);
-    const name = row.querySelector(".portion-name-input").value.trim();
+    const unit = row.querySelector(".portion-unit-input").value.trim();
     const weight = Number(row.querySelector(".portion-weight-input").value);
-    if (!Number.isFinite(amount) || amount <= 0 || !name || !Number.isFinite(weight) || weight <= 0) {
-      throw new Error("Each portion needs amount, name, and positive weight.");
+    if (!Number.isFinite(amount) || amount <= 0 || !unit || !Number.isFinite(weight) || weight <= 0) {
+      throw new Error("Each portion needs amount, unit, and positive weight.");
     }
-    return { amount, name, weight };
+    return { amount, unit, weight };
   });
 
   if (!payload.portions.length) {
