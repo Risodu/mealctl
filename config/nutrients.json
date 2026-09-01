@@ -153,21 +153,22 @@
         },
 
         "energy": {
+
             "morning": {
-                "required": { "min": 1200, "max": 2600 },
-                "recommended": { "min": 1600, "max": 2200 }
+                "required": { "min": 3500, "max": 11500 },
+                "recommended": { "min": 5000, "max": 8000 }
             },
             "noon": {
-                "required": { "min": 1800, "max": 3600 },
-                "recommended": { "min": 2400, "max": 3000 }
+                "required": { "min": 6500, "max": 14500 },
+                "recommended": { "min": 8000, "max": 11500 }
             },
             "evening": {
-                "required": { "min": 1600, "max": 3000 },
-                "recommended": { "min": 2000, "max": 2600 }
+                "required": { "min": 6500, "max": 14500 },
+                "recommended": { "min": 8000, "max": 11500 }
             },
             "night": {
-                "required": { "min": 0, "max": 1400 },
-                "recommended": { "min": 200, "max": 800 }
+                "required": { "min": 0, "max": 6500 },
+                "recommended": { "min": 0, "max": 3000 }
             },
             "total": {
                 "required": { "min": 25000, "max": 40000 },
