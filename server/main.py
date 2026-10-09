@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import Flask, Response, request
 from mealctl.server.db import DBHandler
+from mealctl.shared.structure import FoodPortion
 from pydantic_core import to_json, to_jsonable_python
 import pydantic
 from flask_pydantic import validate
@@ -119,9 +120,6 @@ def getSummary(dbh: DBHandler, timestamp: datetime):
 
 @app.route('/summary/<string:timestamp>')
 def summary(timestamp):
-    if timestamp is None:
-        return 'Missing fields', 400
-
     try:
         dt = datetime.fromisoformat(timestamp)
     except ValueError:
@@ -130,9 +128,21 @@ def summary(timestamp):
     with DBHandler(DATA) as dbh:
         return Response(to_json(getSummary(dbh, dt)), 200, mimetype='application/json')
 
-# def addBrandedFood():
+class NutrientContent:
+    id: int
+    amount: float
+
+class BrandedFood:
+    name: str
+    nutrients: list[NutrientContent]
+    portions: list[FoodPortion]
 
 @app.route('/addBrandedFood', methods=['POST'])
+@validate()
+def addBrandedFood(body: BrandedFood):
+    with DBHandler(DATA) as dbh:
+        dbh.createUserMeal(body.name, {i.id: i.amount for i in body.nutrients}, body.portions)
+
 @app.route('/addRecipeFood')
 @app.route('/editBrandedFood')
 @app.route('/editRecipeFood')
@@ -152,6 +162,14 @@ def handle_exception(e):
     # })
     # response.content_type = "application/json"
     return e.name, e.code
+
+@app.after_request
+def handle_options(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Requested-With"
+
+    return response
 
 if __name__ == '__main__':
     try:
