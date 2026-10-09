@@ -4,6 +4,8 @@
 - [x] Show (daily) summary
 - [x] Custom elementary foods
 - [ ] Custom compound foods
+- [ ] Shopping list
+- [ ] Generate menu
 
 # Backend
 
@@ -13,10 +15,13 @@
 - [x] logMeal
 - [x] deleteMeal
 - [x] summary
-- [ ] addBrandedFood
+- [x] addBrandedFood
 - [ ] addRecipeFood
 - [ ] editBrandedFood
 - [ ] editRecipeFood
+- [ ] POST stored
+- [ ] GET stored
+- [ ] DELETE stored
 
 # APIs
 
@@ -201,6 +206,58 @@ while unsuccessful requests respond with status `4xx` and plain text content.
 {
     "fdc_id": 123,
     ... // Same as addBrandedFood / addRecipeFood
+}
+```
+
+### Response
+```json
+{}
+```
+
+## GET stored
+
+### Request
+```json
+{}
+```
+
+### Response
+```json
+[
+    {
+        "id": 12, // entry ID
+        "fdc_id": 123,
+        "amount": 120, // remaining amount of this entry in grams
+        "acquisition_date": "1970-01-01",
+        "expiration_date": "1970-02-01"
+    }
+]
+```
+
+## POST stored
+
+### Request
+```json
+{
+    "id": 12 | null, // number means UPDATE, null means CREATE
+    // if id is not null, other fields might be null (meaning they won't be updated)
+    "fdc_id": 123,
+    "amount": 120,
+    "acquisition_date": "1970-01-01",
+    "expiration_date": "1970-02-01"
+}
+```
+
+### Response
+```json
+{}
+```
+
+## DELETE stored
+### Request
+```json
+{
+    "id": 12
 }
 ```
 

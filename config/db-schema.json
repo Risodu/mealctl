@@ -227,8 +227,19 @@
             "columns": [
                 {"name": "id", "type": "INTEGER PRIMARY KEY"},
                 {"name": "fdc_id", "type": "INTEGER NOT NULL"},
+                {"name": "user", "type": "TEXT NOT NULL"},
                 {"name": "weight", "type": "REAL NOT NULL"},
                 {"name": "timestamp", "type": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL"}
+            ]
+        },
+        {
+            "name": "stored_food",
+            "columns": [
+                {"name": "id", "type": "INTEGER PRIMARY KEY"},
+                {"name": "fdc_id", "type": "INTEGER NOT NULL"},
+                {"name": "amount", "type": "REAL NOT NULL"},
+                {"name": "acquisition_date", "type": "TIMESTAMP NOT NULL"},
+                {"name": "expiration_date", "type": "TIMESTAMP NOT NULL"}
             ]
         },
         {
