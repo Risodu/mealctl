@@ -1,7 +1,7 @@
 import sqlite3
 import sys
 from datetime import datetime
-from mealctl.shared.structure import Food, Nutrient, FoodPortionInput, FoodPortion, Meal
+from mealctl.shared.structure import Food, Nutrient, FoodPortionInput, FoodPortion, Meal, StoredFood, StoredFoodInput, StoredFoodUpdate
 
 class DBHandler:
     def __init__(self, filename) -> None:
@@ -141,6 +141,25 @@ class DBHandler:
         for portion in portions:
             unitId = self.getUnitId(portion.unit)
             self.cur.execute("INSERT INTO user.food_portion (fdc_id, amount, measure_unit_id, gram_weight) VALUES (?, ?, ?, ?)", (fdc_id, portion.amount, unitId, portion.weight))
+
+    def getStored(self) -> list[StoredFood]:
+        return self._fetchList("SELECT id, fdc_id, amount, acquisition_date, expiration_date FROM user.stored_food WHERE amount > 0", (), StoredFood)
+
+    def getStoredById(self, id: int) -> StoredFood | None:
+        res = self._fetchList("SELECT id, fdc_id, amount, acquisition_date, expiration_date FROM user.stored_food WHERE id = ?", (id,), StoredFood)
+        if not res: return None
+        return res[0]
+
+    def insertStored(self, stored: StoredFoodInput) -> None:
+        self.cur.execute("INSERT INTO user.stored_food (fdc_id, amount, acquisition_date, expiration_date) VALUES (?, ?, ?, ?)", (stored.fdc_id, stored.amount, stored.acquisition_date, stored.expiration_date))
+
+    def updateStored(self, stored: StoredFoodUpdate) -> None:
+        fields = ('fdc_id', 'amount', 'acquisition_date', 'expiration_date')
+        params = (stored.fdc_id, stored.amount, stored.acquisition_date, stored.expiration_date)
+        self.cur.execute("UPDATE user.stored_food SET " + ', '.join(f + '=?' for f, p in zip(fields, params) if p is not None) + 'WHERE id = ?', tuple(p for p in params if p is not None) + (stored.id,))
+
+    def deleteStored(self, id: int) -> None:
+        self.cur.execute("DELETE FROM user.stored_food WHERE id = ?", (id,))
 
 if __name__ == '__main__':
     import sys

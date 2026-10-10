@@ -43,3 +43,26 @@ class Meal(BaseModel):
 
     def __init__(self, id: int, weight: float, timestamp: datetime, food: Food, **kwargs):
         super().__init__(id=id, weight=weight, timestamp=timestamp, food=food, **kwargs)
+
+class StoredFoodInput(BaseModel):
+    fdc_id: int
+    amount: float
+    acquisition_date: datetime
+    expiration_date: datetime
+
+class StoredFoodUpdate(BaseModel):
+    id: int
+    fdc_id: Optional[int] = None
+    amount: Optional[float] = None
+    acquisition_date: Optional[datetime] = None
+    expiration_date: Optional[datetime] = None
+
+class StoredFood(BaseModel):
+    id: int
+    fdc_id: int
+    amount: float
+    acquisition_date: datetime
+    expiration_date: datetime
+
+    def __init__(self, id: int, fdc_id: int, amount: float, acquisition_date: datetime, expiration_date: datetime) -> None:
+        super().__init__(id=id, fdc_id=fdc_id, amount=amount, acquisition_date=acquisition_date, expiration_date=expiration_date)

@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Flask, Response, request
 import flask_pydantic
 from mealctl.server.db import DBHandler
-from mealctl.shared.structure import FoodPortion, FoodPortionInput
+from mealctl.shared.structure import FoodPortion, FoodPortionInput, StoredFoodInput, StoredFoodUpdate
 from pydantic_core import to_json, to_jsonable_python
 import pydantic
 from flask_pydantic import validate
@@ -154,6 +154,42 @@ def addBrandedFood(body: BrandedFood):
 @app.route('/editRecipeFood')
 def nullfn():
     return 'Not implemented', 501
+
+@app.route('/stored')
+def getStored():
+    with DBHandler(DATA) as dbh:
+        return Response(to_json(dbh.getStored()), 200, mimetype='application/json')
+
+@app.route('/stored', methods=['POST'])
+@validate()
+def addStored(body: StoredFoodInput):
+    with DBHandler(DATA) as dbh:
+        dbh.insertStored(body)
+
+    return Response('{}', 200, mimetype='application/json')
+
+@app.route('/stored', methods=['PUT'])
+@validate()
+def updateStored(body: StoredFoodUpdate):
+    with DBHandler(DATA) as dbh:
+        if dbh.getStoredById(body.id) is None:
+            return "Entry with this id does not exist", 404
+        dbh.updateStored(body)
+
+    return Response('{}', 200, mimetype='application/json')
+
+class DeleteStoredRequest(pydantic.BaseModel):
+    id: int
+
+@app.route('/stored', methods=['DELETE'])
+@validate()
+def deleteStored(body: DeleteStoredRequest):
+    with DBHandler(DATA) as dbh:
+        if dbh.getStoredById(body.id) is None:
+            return "Entry with this id does not exist", 404
+        dbh.deleteStored(body.id)
+
+    return Response('{}', 200, mimetype='application/json')
 
 @app.errorhandler(HTTPException)
 def handle_exception(e):

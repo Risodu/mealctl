@@ -19,9 +19,10 @@
 - [ ] addRecipeFood
 - [ ] editBrandedFood
 - [ ] editRecipeFood
-- [ ] POST stored
-- [ ] GET stored
-- [ ] DELETE stored
+- [x] POST stored
+- [x] PUT stored
+- [x] GET stored
+- [x] DELETE stored
 
 # APIs
 
@@ -235,16 +236,29 @@ while unsuccessful requests respond with status `4xx` and plain text content.
 ```
 
 ## POST stored
+Create new entry
 
 ### Request
 ```json
 {
-    "id": 12 | null, // number means UPDATE, null means CREATE
-    // if id is not null, other fields might be null (meaning they won't be updated)
     "fdc_id": 123,
     "amount": 120,
     "acquisition_date": "1970-01-01",
     "expiration_date": "1970-02-01"
+}
+```
+
+## PUT stored
+Update existing entry
+
+### Request
+```json
+{
+    "id": 12,
+    "fdc_id": 123 | null,
+    "amount": 120 | null,
+    "acquisition_date": "1970-01-01" | null,
+    "expiration_date": "1970-02-01" | null
 }
 ```
 
