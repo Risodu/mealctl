@@ -14,16 +14,18 @@ class MeasureUnit(BaseModel):
     id: int
     name: str
 
-class FoodPortion(BaseModel):
-    id: int
+class FoodPortionInput(BaseModel):
     amount: float
     unit: str
     weight: float
     modifier: Optional[str] = None
     sequenceNumber: Optional[int] = 0
 
+class FoodPortion(FoodPortionInput):
+    id: int
+
     def __init__(self, id: int, amount: float, unit: str, weight: float, **kwargs):
-        super().__init__(id=id, unit=unit, amount=amount, weight=weight, **kwargs)
+        BaseModel.__init__(self, id=id, unit=unit, amount=amount, weight=weight, **kwargs)
 
 class Food(BaseModel):
     fdcId: int

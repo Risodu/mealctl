@@ -1,7 +1,8 @@
 from datetime import datetime
 from flask import Flask, Response, request
+import flask_pydantic
 from mealctl.server.db import DBHandler
-from mealctl.shared.structure import FoodPortion
+from mealctl.shared.structure import FoodPortion, FoodPortionInput
 from pydantic_core import to_json, to_jsonable_python
 import pydantic
 from flask_pydantic import validate
@@ -128,20 +129,25 @@ def summary(timestamp):
     with DBHandler(DATA) as dbh:
         return Response(to_json(getSummary(dbh, dt)), 200, mimetype='application/json')
 
-class NutrientContent:
+class NutrientContent(pydantic.BaseModel):
     id: int
     amount: float
 
-class BrandedFood:
+class BrandedFood(pydantic.BaseModel):
     name: str
     nutrients: list[NutrientContent]
-    portions: list[FoodPortion]
+    portions: list[FoodPortionInput]
 
 @app.route('/addBrandedFood', methods=['POST'])
 @validate()
 def addBrandedFood(body: BrandedFood):
     with DBHandler(DATA) as dbh:
+        if dbh.getFdcIdByDescription(body.name) is not None:
+            return f'Food {body.name} already exists', 422
+
         dbh.createUserMeal(body.name, {i.id: i.amount for i in body.nutrients}, body.portions)
+
+    return Response('{}', 200, mimetype='application/json')
 
 @app.route('/addRecipeFood')
 @app.route('/editBrandedFood')
@@ -163,9 +169,13 @@ def handle_exception(e):
     # response.content_type = "application/json"
     return e.name, e.code
 
+@app.errorhandler(flask_pydantic.exceptions.JsonBodyParsingError)
+def handleJsonBodyParsingError(e):
+    return "Malformed request", 400
+
 @app.after_request
 def handle_options(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:8001"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Requested-With"
 

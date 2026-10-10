@@ -1,7 +1,7 @@
 import sqlite3
 import sys
 from datetime import datetime
-from mealctl.shared.structure import Food, Nutrient, FoodPortion, Meal
+from mealctl.shared.structure import Food, Nutrient, FoodPortionInput, FoodPortion, Meal
 
 class DBHandler:
     def __init__(self, filename) -> None:
@@ -68,6 +68,9 @@ class DBHandler:
         if not res: return None
         return res[0]
 
+    def getFdcIdByDescription(self, description: str) -> int | None:
+        return self.getId('food', 'description', description, 'fdc_id')
+
     def getFoodPortions(self, food: Food) -> dict[int, FoodPortion]:
         return self._fetchDict(
             "SELECT p.id, p.amount, u.name, p.gram_weight FROM food_portion AS p LEFT JOIN measure_unit AS u ON p.measure_unit_id = u.id WHERE fdc_id = ?",
@@ -113,8 +116,8 @@ class DBHandler:
             lambda id, amount: amount 
         )
 
-    def getId(self, table: str, field: str, value: str) -> int | None:
-        self.cur.execute("SELECT id FROM ? WHERE ? = '?'", (table, field, value))
+    def getId(self, table: str, field: str, value: str, idcol: str = 'id') -> int | None:
+        self.cur.execute(f"SELECT {idcol} FROM {table} WHERE {field} = ?", (value,))
         row = self.cur.fetchone()
         if row is None: return None
         return row[-1]
@@ -123,15 +126,14 @@ class DBHandler:
         id = self.getId('measure_unit', 'name', name)
         if id is not None: return id
 
-        self.cur.execute("INSERT INTO user.measure_unit (name) VALUES ('?')", (name,))
+        self.cur.execute("INSERT INTO user.measure_unit (name) VALUES (?)", (name,))
         id = self.getId('measure_unit', 'name', name)
         assert id is not None
         return id
 
-    def createUserMeal(self, name: str, nutrients: dict[int, float], portions: list[FoodPortion]):
-        if self.getId('food', 'description', name) is not None: raise ValueError(f'Food {name} already exists')
-        self.cur.execute("INSERT INTO user.food (data_type, description) VALUES ('foundation_food', '?'", (name,))
-        fdc_id = self.getId('food', 'description', name)
+    def createUserMeal(self, name: str, nutrients: dict[int, float], portions: list[FoodPortionInput]):
+        self.cur.execute("INSERT INTO user.food (data_type, description) VALUES ('foundation_food', ?)", (name,))
+        fdc_id = self.getId('food', 'description', name, 'fdc_id')
 
         for nutrient, amount in nutrients.items():
             self.cur.execute("INSERT INTO user.food_nutrient (fdc_id, nutrient_id, amount) VALUES (?, ?, ?)", (fdc_id, nutrient, amount))
