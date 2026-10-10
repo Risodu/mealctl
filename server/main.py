@@ -164,6 +164,9 @@ def getStored():
 @validate()
 def addStored(body: StoredFoodInput):
     with DBHandler(DATA) as dbh:
+        if dbh.getFood(body.fdc_id) is None:
+            return 'Invalid food id', 422
+
         dbh.insertStored(body)
 
     return Response('{}', 200, mimetype='application/json')
@@ -172,8 +175,12 @@ def addStored(body: StoredFoodInput):
 @validate()
 def updateStored(body: StoredFoodUpdate):
     with DBHandler(DATA) as dbh:
+        if body.fdc_id is not None and dbh.getFood(body.fdc_id) is None:
+            return 'Invalid food id', 422
+
         if dbh.getStoredById(body.id) is None:
             return "Entry with this id does not exist", 404
+
         dbh.updateStored(body)
 
     return Response('{}', 200, mimetype='application/json')

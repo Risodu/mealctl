@@ -143,7 +143,7 @@ class DBHandler:
             self.cur.execute("INSERT INTO user.food_portion (fdc_id, amount, measure_unit_id, gram_weight) VALUES (?, ?, ?, ?)", (fdc_id, portion.amount, unitId, portion.weight))
 
     def getStored(self) -> list[StoredFood]:
-        return self._fetchList("SELECT id, fdc_id, amount, acquisition_date, expiration_date FROM user.stored_food WHERE amount > 0", (), StoredFood)
+        return self._fetchList("SELECT id, fdc_id, amount, acquisition_date, expiration_date FROM user.stored_food", (), StoredFood)
 
     def getStoredById(self, id: int) -> StoredFood | None:
         res = self._fetchList("SELECT id, fdc_id, amount, acquisition_date, expiration_date FROM user.stored_food WHERE id = ?", (id,), StoredFood)
@@ -156,6 +156,10 @@ class DBHandler:
     def updateStored(self, stored: StoredFoodUpdate) -> None:
         fields = ('fdc_id', 'amount', 'acquisition_date', 'expiration_date')
         params = (stored.fdc_id, stored.amount, stored.acquisition_date, stored.expiration_date)
+
+        if all(i is None for i in params):
+            return
+
         self.cur.execute("UPDATE user.stored_food SET " + ', '.join(f + '=?' for f, p in zip(fields, params) if p is not None) + 'WHERE id = ?', tuple(p for p in params if p is not None) + (stored.id,))
 
     def deleteStored(self, id: int) -> None:
