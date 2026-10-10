@@ -21,6 +21,7 @@
       <button class="tab is-active" data-view-target="dashboard-view" type="button">Dashboard</button>
       <button class="tab" data-view-target="log-view" type="button">Log Meal</button>
       <button class="tab" data-view-target="foods-view" type="button">Foods</button>
+      <button class="tab" data-view-target="storage-view" type="button">Storage</button>
       <button class="tab" data-view-target="custom-view" type="button">Custom Foods</button>
     </nav>
 
@@ -137,6 +138,61 @@
 
           <div class="card stack-md">
             <div id="foods-detail-panel" class="empty-state">Search and select a food to inspect it.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="storage-view" class="view" aria-labelledby="storage-heading">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Food inventory</p>
+            <h2 id="storage-heading">Storage</h2>
+          </div>
+        </div>
+
+        <div class="split-layout">
+          <div class="card stack-md">
+            <h3>Overview</h3>
+            <div id="storage-status" class="status-line"></div>
+            <div id="storage-list" class="storage-list"></div>
+          </div>
+
+          <div class="card stack-md">
+            <div>
+              <p class="eyebrow">Storage entry</p>
+              <h3 id="storage-form-heading">Add entry</h3>
+            </div>
+
+            <form id="storage-form" class="stack-md">
+              <label>
+                <span>Search food</span>
+                <input id="storage-food-search" type="search" placeholder="Bread, yogurt, banana..." autocomplete="off">
+              </label>
+              <div id="storage-search-status" class="status-line">Type at least 2 letters to search.</div>
+              <div id="storage-search-results" class="result-list storage-search-results"></div>
+              <div id="storage-selected-food" class="empty-state">Search and select a food for this entry.</div>
+
+              <div class="storage-fields">
+                <label>
+                  <span>Amount (g)</span>
+                  <input id="storage-amount" name="amount" type="number" min="0.1" step="0.1" required>
+                </label>
+                <label>
+                  <span>Acquisition date</span>
+                  <input id="storage-acquisition-date" name="acquisitionDate" type="date" required>
+                </label>
+                <label>
+                  <span>Expiration date</span>
+                  <input id="storage-expiration-date" name="expirationDate" type="date" required>
+                </label>
+              </div>
+
+              <div id="storage-form-error" class="inline-error hidden"></div>
+              <div class="storage-form-actions">
+                <button id="storage-submit" type="submit">Add entry</button>
+                <button id="storage-cancel-edit" class="hidden" type="button">Cancel edit</button>
+              </div>
+            </form>
           </div>
         </div>
       </section>

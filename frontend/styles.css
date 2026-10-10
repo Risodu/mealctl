@@ -179,7 +179,8 @@ p {
 .stack-lg,
 .summary-grid,
 .dynamic-list,
-.result-list {
+.result-list,
+.storage-list {
   display: grid;
 }
 
@@ -254,6 +255,58 @@ p {
 
 .result-list {
   gap: 0.55rem;
+}
+
+.storage-list {
+  gap: 0.7rem;
+}
+
+.storage-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+  padding: 0.9rem;
+  border-radius: 18px;
+  background: var(--surface-muted);
+}
+
+.storage-meta,
+.storage-item-actions,
+.storage-form-actions {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.storage-meta {
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.storage-meta strong {
+  color: var(--text);
+}
+
+.storage-item-actions,
+.storage-form-actions {
+  align-items: center;
+}
+
+.danger-button {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+}
+
+.storage-search-results {
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.storage-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
 }
 
 .result-item {
@@ -488,5 +541,15 @@ p {
   .dynamic-row,
   .dynamic-row.ingredients-row {
     grid-template-columns: 1fr;
+  }
+
+  .storage-item,
+  .storage-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .storage-item-actions button,
+  .storage-form-actions button {
+    flex: 1 1 0;
   }
 }

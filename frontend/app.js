@@ -1,15 +1,19 @@
 import { createApi } from "./api.js";
 import { IMPORTANT_NUTRIENT_IDS } from "./config.js";
 import { state, today } from "./state.js";
-import { renderFoodDetails, renderResultList, renderSummary } from "./ui.js";
+import { renderFoodDetails, renderResultList, renderStorage, renderSummary } from "./ui.js";
 
 const api = createApi(() => state.apiBase);
 let searchTimer = null;
 let browserTimer = null;
+let storageSearchTimer = null;
 let autoTimestampTimer = null;
 let quantityMode = "grams";
 let selectedPortionId = null;
 let customAction = "addBrandedFood";
+let selectedStoredFood = null;
+let editingStoredId = null;
+let editingStoredFdcId = null;
 
 const elements = {
   globalError: document.querySelector("#global-error"),
@@ -40,6 +44,20 @@ const elements = {
   foodsBrowserStatus: document.querySelector("#foods-browser-status"),
   foodsBrowserResults: document.querySelector("#foods-browser-results"),
   foodsDetailPanel: document.querySelector("#foods-detail-panel"),
+  storageStatus: document.querySelector("#storage-status"),
+  storageList: document.querySelector("#storage-list"),
+  storageForm: document.querySelector("#storage-form"),
+  storageFormHeading: document.querySelector("#storage-form-heading"),
+  storageFoodSearch: document.querySelector("#storage-food-search"),
+  storageSearchStatus: document.querySelector("#storage-search-status"),
+  storageSearchResults: document.querySelector("#storage-search-results"),
+  storageSelectedFood: document.querySelector("#storage-selected-food"),
+  storageAmount: document.querySelector("#storage-amount"),
+  storageAcquisitionDate: document.querySelector("#storage-acquisition-date"),
+  storageExpirationDate: document.querySelector("#storage-expiration-date"),
+  storageFormError: document.querySelector("#storage-form-error"),
+  storageSubmit: document.querySelector("#storage-submit"),
+  storageCancelEdit: document.querySelector("#storage-cancel-edit"),
   customFoodForm: document.querySelector("#custom-food-form"),
   customAction: document.querySelector("#custom-action"),
   customActionButtons: [...document.querySelectorAll("#custom-action [data-action-value]")],
@@ -64,6 +82,7 @@ async function init() {
   syncTimestampMode();
 
   bindEvents();
+  resetStorageForm();
   addPortionRow();
   updateCustomFormMode();
   await loadInitialData();
@@ -71,7 +90,11 @@ async function init() {
 
 function bindEvents() {
   for (const tab of elements.tabs) {
-    tab.addEventListener("click", () => setActiveView(tab.dataset.viewTarget));
+    tab.addEventListener("click", () => {
+      const target = tab.dataset.viewTarget;
+      setActiveView(target);
+      if (target === "storage-view") void loadStorage();
+    });
   }
 
   elements.summaryControls.addEventListener("submit", async (event) => {
@@ -106,6 +129,14 @@ function bindEvents() {
   elements.portionCount.addEventListener("input", renderComputedWeight);
 
   elements.logMealForm.addEventListener("submit", submitLogMeal);
+
+  elements.storageFoodSearch.addEventListener("input", () => {
+    selectedStoredFood = null;
+    renderStoredFoodSelection();
+    debounceStorageSearch();
+  });
+  elements.storageForm.addEventListener("submit", submitStoredEntry);
+  elements.storageCancelEdit.addEventListener("click", resetStorageForm);
 
   for (const button of elements.customActionButtons) {
     button.addEventListener("click", () => {
@@ -142,7 +173,7 @@ async function loadSummary() {
   try {
     const summary = await api.getSummary(state.summaryDate);
     state.summary = summary;
-    await hydrateMealDescriptions(summary);
+    await hydrateFoodDescriptions(summary.flatMap((part) => part.meals.map((meal) => meal.fdc_id)));
     elements.summaryStatus.textContent = `Loaded ${summary.length} time blocks for ${state.summaryDate}.`;
     renderSummary(elements.summaryGrid, state.summary, state.nutrients, state.foodCache, deleteMeal);
     clearGlobalError();
@@ -155,8 +186,8 @@ async function loadSummary() {
   }
 }
 
-async function hydrateMealDescriptions(summary) {
-  const ids = [...new Set(summary.flatMap((part) => part.meals.map((meal) => meal.fdc_id)))];
+async function hydrateFoodDescriptions(fdcIds) {
+  const ids = [...new Set(fdcIds)];
   await Promise.all(
     ids
       .filter((id) => !state.foodCache[id])
@@ -168,6 +199,191 @@ async function hydrateMealDescriptions(summary) {
         }
       }),
   );
+}
+
+async function loadStorage() {
+  if (state.pending.storage) return;
+  state.pending.storage = true;
+  elements.storageStatus.textContent = "Loading storage...";
+
+  try {
+    const entries = await api.getStored();
+    state.storedEntries = entries;
+    await hydrateFoodDescriptions(entries.map((entry) => entry.fdc_id));
+    elements.storageStatus.textContent = `${entries.length} stored entr${entries.length === 1 ? "y" : "ies"}.`;
+    renderStorage(elements.storageList, entries, state.foodCache, editStoredEntry, deleteStoredEntry);
+    clearGlobalError();
+  } catch (error) {
+    elements.storageStatus.textContent = "";
+    showGlobalError(error.message);
+    renderStorage(elements.storageList, [], state.foodCache, editStoredEntry, deleteStoredEntry);
+  } finally {
+    state.pending.storage = false;
+  }
+}
+
+function debounceStorageSearch() {
+  window.clearTimeout(storageSearchTimer);
+  const query = elements.storageFoodSearch.value.trim();
+  storageSearchTimer = window.setTimeout(() => {
+    void searchStorageFoods(query);
+  }, 250);
+}
+
+async function searchStorageFoods(query) {
+  if (query.length < 2) {
+    elements.storageSearchStatus.textContent = "Type at least 2 letters to search.";
+    elements.storageSearchResults.textContent = "";
+    return;
+  }
+
+  elements.storageSearchStatus.textContent = "Searching...";
+  try {
+    const results = Object.values(await api.searchFoods(query));
+    elements.storageSearchStatus.textContent = `${results.length} result${results.length === 1 ? "" : "s"}.`;
+    renderResultList(elements.storageSearchResults, results, selectStoredFood);
+    clearGlobalError();
+  } catch (error) {
+    elements.storageSearchStatus.textContent = "";
+    elements.storageSearchResults.textContent = "";
+    showInlineError(elements.storageFormError, error.message);
+  }
+}
+
+function selectStoredFood(food) {
+  selectedStoredFood = food;
+  state.foodCache[food.fdcId] = state.foodCache[food.fdcId] || food;
+  elements.storageFoodSearch.value = food.description;
+  elements.storageSearchStatus.textContent = `Selected food #${food.fdcId}.`;
+  elements.storageSearchResults.textContent = "";
+  renderStoredFoodSelection();
+  hideInlineError(elements.storageFormError);
+}
+
+function renderStoredFoodSelection() {
+  const fdcId = getSelectedStoredFoodId();
+  if (!fdcId) {
+    elements.storageSelectedFood.textContent = "Search and select a food for this entry.";
+    return;
+  }
+
+  elements.storageSelectedFood.textContent = `${selectedStoredFood.description || `Food #${fdcId}`} · #${fdcId}`;
+}
+
+function getSelectedStoredFoodId() {
+  return Number(selectedStoredFood?.fdcId ?? selectedStoredFood?.fdc_id) || null;
+}
+
+function editStoredEntry(entry) {
+  editingStoredId = entry.id;
+  editingStoredFdcId = entry.fdc_id;
+  selectedStoredFood = state.foodCache[entry.fdc_id] || {
+    fdcId: entry.fdc_id,
+    description: `Food #${entry.fdc_id}`,
+  };
+  elements.storageFoodSearch.value = selectedStoredFood.description;
+  elements.storageSearchStatus.textContent = `Selected food #${entry.fdc_id}.`;
+  elements.storageSearchResults.textContent = "";
+  elements.storageAmount.value = String(entry.amount);
+  elements.storageAcquisitionDate.value = dateInputValue(entry.acquisition_date);
+  elements.storageExpirationDate.value = dateInputValue(entry.expiration_date);
+  elements.storageFormHeading.textContent = `Edit entry #${entry.id}`;
+  elements.storageSubmit.textContent = "Save changes";
+  elements.storageCancelEdit.classList.remove("hidden");
+  hideInlineError(elements.storageFormError);
+  renderStoredFoodSelection();
+  elements.storageForm.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function submitStoredEntry(event) {
+  event.preventDefault();
+  if (state.pending.storageMutation) return;
+
+  try {
+    const payload = buildStoredPayload();
+    state.pending.storageMutation = true;
+    elements.storageSubmit.disabled = true;
+
+    if (editingStoredId === null) {
+      await api.addStored(payload);
+    } else {
+      const update = { id: editingStoredId, ...payload };
+      if (payload.fdc_id === editingStoredFdcId) delete update.fdc_id;
+      await api.updateStored(update);
+    }
+
+    resetStorageForm();
+    await loadStorage();
+  } catch (error) {
+    showInlineError(elements.storageFormError, error.message);
+  } finally {
+    state.pending.storageMutation = false;
+    elements.storageSubmit.disabled = false;
+  }
+}
+
+function buildStoredPayload() {
+  const fdcId = getSelectedStoredFoodId();
+  const amount = Number(elements.storageAmount.value);
+  const acquisitionDate = elements.storageAcquisitionDate.value;
+  const expirationDate = elements.storageExpirationDate.value;
+
+  if (!Number.isInteger(fdcId) || fdcId <= 0) {
+    throw new Error("Select a food from the search results.");
+  }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Amount must be a positive number.");
+  }
+  if (!acquisitionDate || !expirationDate) {
+    throw new Error("Acquisition and expiration dates are required.");
+  }
+  if (expirationDate < acquisitionDate) {
+    throw new Error("Expiration date cannot be before the acquisition date.");
+  }
+
+  return {
+    fdc_id: fdcId,
+    amount,
+    acquisition_date: acquisitionDate,
+    expiration_date: expirationDate,
+  };
+}
+
+async function deleteStoredEntry(entry) {
+  if (state.pending.storageMutation) return;
+  const food = state.foodCache[entry.fdc_id];
+  const description = food?.description || `Food #${entry.fdc_id}`;
+  if (!window.confirm(`Delete ${description} from storage?`)) return;
+
+  state.pending.storageMutation = true;
+  try {
+    await api.deleteStored(entry.id);
+    if (editingStoredId === entry.id) resetStorageForm();
+    await loadStorage();
+  } catch (error) {
+    showGlobalError(error.message);
+  } finally {
+    state.pending.storageMutation = false;
+  }
+}
+
+function resetStorageForm() {
+  editingStoredId = null;
+  editingStoredFdcId = null;
+  selectedStoredFood = null;
+  elements.storageForm.reset();
+  elements.storageAcquisitionDate.value = today();
+  elements.storageFormHeading.textContent = "Add entry";
+  elements.storageSubmit.textContent = "Add entry";
+  elements.storageCancelEdit.classList.add("hidden");
+  elements.storageSearchStatus.textContent = "Type at least 2 letters to search.";
+  elements.storageSearchResults.textContent = "";
+  hideInlineError(elements.storageFormError);
+  renderStoredFoodSelection();
+}
+
+function dateInputValue(value) {
+  return String(value || "").slice(0, 10);
 }
 
 function debounceSearch(mode) {

@@ -177,6 +177,52 @@ export function renderSummary(container, summary, nutrientMap, foodCache, onDele
   }
 }
 
+export function renderStorage(container, entries, foodCache, onEdit, onDelete) {
+  container.textContent = "";
+  if (!entries.length) {
+    container.append(createElement("div", "empty-state", "No food is currently stored."));
+    return;
+  }
+
+  for (const entry of entries) {
+    const item = createElement("article", "storage-item");
+    const body = createElement("div", "stack-md");
+    const title = createElement("div", "food-title");
+    const description = foodCache[entry.fdc_id]?.description || `Food #${entry.fdc_id}`;
+    title.append(
+      createElement("strong", "", description),
+      createElement("small", "", `Food #${entry.fdc_id} · Entry #${entry.id}`),
+    );
+
+    const meta = createElement("div", "storage-meta");
+    meta.append(
+      createElement("strong", "", `${formatAmount(entry.amount)} g remaining`),
+      createElement("span", "", `Acquired ${formatDate(entry.acquisition_date)}`),
+      createElement("span", "", `Expires ${formatDate(entry.expiration_date)}`),
+    );
+
+    const actions = createElement("div", "storage-item-actions");
+    const edit = createElement("button", "", "Edit");
+    edit.type = "button";
+    edit.addEventListener("click", () => onEdit(entry));
+    const remove = createElement("button", "danger-button", "Delete");
+    remove.type = "button";
+    remove.addEventListener("click", () => onDelete(entry));
+    actions.append(edit, remove);
+
+    body.append(title, meta);
+    item.append(body, actions);
+    container.append(item);
+  }
+}
+
+function formatDate(value) {
+  const datePart = String(value || "").slice(0, 10);
+  const [year, month, day] = datePart.split("-").map(Number);
+  if (!year || !month || !day) return datePart || "Unknown";
+  return new Date(year, month - 1, day).toLocaleDateString();
+}
+
 function renderNutrientBar(item, nutrient) {
   const name = nutrient?.name || `Nutrient #${item.nutrient}`;
   const unit = nutrient?.unit || "";

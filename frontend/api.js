@@ -53,6 +53,27 @@ export function createApi(getBase) {
         body: JSON.stringify({ meal_id: mealId }),
       });
     },
+    getStored() {
+      return request(getBase(), "/stored");
+    },
+    addStored(payload) {
+      return request(getBase(), "/stored", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    },
+    updateStored(payload) {
+      return request(getBase(), "/stored", {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+    },
+    deleteStored(id) {
+      return request(getBase(), "/stored", {
+        method: "DELETE",
+        body: JSON.stringify({ id }),
+      });
+    },
     addBrandedFood(payload) {
       return request(getBase(), "/addBrandedFood", {
         method: "POST",
