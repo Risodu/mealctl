@@ -218,9 +218,9 @@ export function renderStorage(container, entries, foodCache, onEdit, onDelete) {
 
 function formatDate(value) {
   const datePart = String(value || "").slice(0, 10);
-  const [year, month, day] = datePart.split("-").map(Number);
+  const [year, month, day] = datePart.split("-");
   if (!year || !month || !day) return datePart || "Unknown";
-  return new Date(year, month - 1, day).toLocaleDateString();
+  return `${day}. ${month}. ${year}`;
 }
 
 function renderNutrientBar(item, nutrient) {

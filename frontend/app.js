@@ -93,7 +93,12 @@ function bindEvents() {
     tab.addEventListener("click", () => {
       const target = tab.dataset.viewTarget;
       setActiveView(target);
-      if (target === "storage-view") void loadStorage();
+      if (target === "storage-view") {
+        if (editingStoredId === null && !elements.storageAcquisitionDate.value) {
+          elements.storageAcquisitionDate.value = today();
+        }
+        void loadStorage();
+      }
     });
   }
 
@@ -240,11 +245,12 @@ async function searchStorageFoods(query) {
   elements.storageSearchStatus.textContent = "Searching...";
   try {
     const results = Object.values(await api.searchFoods(query));
+    if (elements.storageFoodSearch.value.trim() !== query) return;
     elements.storageSearchStatus.textContent = `${results.length} result${results.length === 1 ? "" : "s"}.`;
     renderResultList(elements.storageSearchResults, results, selectStoredFood);
     clearGlobalError();
   } catch (error) {
-    elements.storageSearchStatus.textContent = "";
+    elements.storageSearchStatus.textContent = "Search failed.";
     elements.storageSearchResults.textContent = "";
     showInlineError(elements.storageFormError, error.message);
   }
@@ -262,12 +268,18 @@ function selectStoredFood(food) {
 
 function renderStoredFoodSelection() {
   const fdcId = getSelectedStoredFoodId();
+  elements.storageSelectedFood.textContent = "";
+  elements.storageSelectedFood.classList.toggle("is-selected", !!fdcId);
   if (!fdcId) {
     elements.storageSelectedFood.textContent = "Search and select a food for this entry.";
     return;
   }
 
-  elements.storageSelectedFood.textContent = `${selectedStoredFood.description || `Food #${fdcId}`} · #${fdcId}`;
+  const description = document.createElement("strong");
+  description.textContent = selectedStoredFood.description || `Food #${fdcId}`;
+  const identifier = document.createElement("small");
+  identifier.textContent = `Selected food · #${fdcId}`;
+  elements.storageSelectedFood.append(description, identifier);
 }
 
 function getSelectedStoredFoodId() {
